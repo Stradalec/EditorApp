@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -8,44 +9,19 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
 
-public class RelayCommand : ICommand
-{
-    private readonly Action _execute;
-    private readonly Func<bool> _canExecute;
-
-    public RelayCommand(Action execute, Func<bool> canExecute = null)
-    {
-        _execute = execute;
-        _canExecute = canExecute;
-    }
-
-    public bool CanExecute(object parameter) => _canExecute?.Invoke() ?? true;
-    public void Execute(object parameter) => _execute();
-    public event EventHandler CanExecuteChanged {
-        add { CommandManager.RequerySuggested += value; }
-        remove { CommandManager.RequerySuggested -= value; }
-    }
-}
 namespace EditorApp.source
 {
-    class ApplicationViewModel : INotifyPropertyChanged
+    partial class ApplicationViewModel : ObservableObject
     {
+        [ObservableProperty]
         private Document selectedDocument;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        public ICommand LoadDocumentCommand { get; private set; }   
-        public Document SelectedDocument {
-            get { return selectedDocument; }
-            set {
-                selectedDocument = value;
-                OnPropertyChanged("SelectedDocument");
-            }
-        }
+        [RelayCommand]
         private void LoadDocument()
         {
             var dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.Filter = "Documents (*.docx)|*.docx";
+            dialog.Filter = "Word Documents (*.docx)|*.docx|All files (*.*)|*.*";
             if (dialog.ShowDialog() == true)
             {
                 SelectedDocument = new Document {
@@ -57,12 +33,6 @@ namespace EditorApp.source
         public ApplicationViewModel()
         {
             SelectedDocument = new Document();
-            LoadDocumentCommand = new RelayCommand(LoadDocument);
-        }
-        public void OnPropertyChanged([CallerMemberName] string prop = "")
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
     }
 }

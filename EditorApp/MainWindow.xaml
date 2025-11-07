@@ -305,7 +305,7 @@
     <StackPanel HorizontalAlignment="Right">
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource TextButton1}" MinWidth="110" Command= "{Binding LoadDocumentCommand}" >Загрузка файла</Button>
-        <TextBlock Style="{DynamicResource WhiteTextBlock}" Text="{Binding SelectedDocument.DocumentName}"/>
+        <TextBlock Style="{DynamicResource WhiteTextBlock}" MaxWidth="110" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource TextButton1}">Выбор шаблона</Button>

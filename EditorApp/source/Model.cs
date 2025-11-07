@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -8,22 +9,12 @@ using System.Threading.Tasks;
 
 namespace EditorApp.source
 {
-    public class Document : INotifyPropertyChanged
+    public partial class Document : ObservableObject
     {
+        [ObservableProperty]
         private string documentName;
-        public string DocumentName {
-            get { return documentName; }
-            set {
-                documentName = value;
-                OnPropertyChanged();
-            }
-        }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        public void OnPropertyChanged([CallerMemberName] string prop = "")
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
-        }
+
+        
     }
 }

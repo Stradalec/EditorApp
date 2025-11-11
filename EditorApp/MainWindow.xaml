@@ -244,7 +244,7 @@
           <ControlTemplate TargetType="{x:Type CheckBox}">
             <Grid x:Name="templateRoot" Background="Transparent" SnapsToDevicePixels="True">
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
               <Border x:Name="checkBoxBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="2" BorderThickness="{TemplateBinding BorderThickness}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
@@ -293,19 +293,37 @@
     </Style>
   </Window.Resources>
   <Grid Style="{DynamicResource GridStyle}">
-    <StackPanel HorizontalAlignment="Left">
-      <TextBox Style="{DynamicResource PrewiewTextBox}" Width="400" Height="300"/>
-      <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <Grid Grid.Column="0" HorizontalAlignment="Stretch">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <TextBox 
+            Grid.Row="0"
+            Style="{DynamicResource PrewiewTextBox}" 
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch"
+            Margin="0,0,0,10"/>
+
+      <StackPanel 
+            Grid.Row="1"
+            Orientation="Horizontal"  
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Bottom">
         <Button Template="{DynamicResource TextButton1}">Назад</Button>
         <TextBlock Style="{DynamicResource WhiteTextBlock}" Text="14/15"/>
         <Button Template="{DynamicResource TextButton1}">Далее</Button>
       </StackPanel>
-    </StackPanel>
-    
-    <StackPanel HorizontalAlignment="Right">
+  </Grid>
+  <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
       <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource TextButton1}" MinWidth="110" Command= "{Binding LoadDocumentCommand}" >Загрузка файла</Button>
-        <TextBlock Style="{DynamicResource WhiteTextBlock}" MaxWidth="110" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
+        <Button Template="{DynamicResource TextButton1}"  Command= "{Binding LoadDocumentCommand}" >Загрузка файла</Button>
+        <TextBlock Style="{DynamicResource WhiteTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource TextButton1}">Выбор шаблона</Button>

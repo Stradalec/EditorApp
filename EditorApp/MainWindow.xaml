@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EditorApp"
         mc:Ignorable="d"
-        Title="Окно" Height="450" Width="800"
+        Title="Окно" Height="450" Width="346"
         Background="Black">
   <Window.Resources>
     <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#FFBEE6FD"/>
@@ -295,32 +295,8 @@
   <Grid Style="{DynamicResource GridStyle}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*"/>
-      <ColumnDefinition Width="*"/>
     </Grid.ColumnDefinitions>
-    <Grid Grid.Column="0" HorizontalAlignment="Stretch">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="*" />
-        <RowDefinition Height="Auto" />
-      </Grid.RowDefinitions>
-
-      <TextBox 
-            Grid.Row="0"
-            Style="{DynamicResource PrewiewTextBox}" 
-            VerticalAlignment="Stretch"
-            HorizontalAlignment="Stretch"
-            Margin="0,0,0,10"/>
-
-      <StackPanel 
-            Grid.Row="1"
-            Orientation="Horizontal"  
-            HorizontalAlignment="Center" 
-            VerticalAlignment="Bottom">
-        <Button Template="{DynamicResource TextButton1}">Назад</Button>
-        <TextBlock Style="{DynamicResource WhiteTextBlock}" Text="14/15"/>
-        <Button Template="{DynamicResource TextButton1}">Далее</Button>
-      </StackPanel>
-  </Grid>
-  <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
+    <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource TextButton1}"  Command= "{Binding LoadDocumentCommand}" >Загрузка файла</Button>
         <TextBlock Style="{DynamicResource WhiteTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
@@ -345,7 +321,7 @@
         </ListBoxItem>
       </ListBox>
       <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource TextButton1}">Запуск</Button>
+        <Button Template="{DynamicResource TextButton1}"  Command="{Binding ProcessAndSaveDocumentCommand}">Запуск</Button>
         <Button Template="{DynamicResource TextButton1}">Отмена</Button>
       </StackPanel>
     </StackPanel>

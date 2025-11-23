@@ -15,6 +15,10 @@ namespace EditorApp.source
         private string documentName;
 
 
-        
+        [ObservableProperty]
+        private string filePath;
+
+        [ObservableProperty]
+        private string bibliographyContent;
     }
 }

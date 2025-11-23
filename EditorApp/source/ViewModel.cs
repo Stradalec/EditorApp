@@ -36,8 +36,10 @@ namespace EditorApp.source
         private async Task LoadDocument()
         {
             if (_dialogService.ShowOpenFileDialog(out string filePath) != true)
+            {
                 return;
-            OpenDocument();
+            }
+         
             SelectedDocument = new Document {
                 DocumentName = Path.GetFileName(filePath),
                 FilePath = filePath
@@ -49,18 +51,22 @@ namespace EditorApp.source
             }
             catch (Exception ex)
             {
-                _dialogService.ShowMessage(
-                    $"Ошибка при обработке документа: {ex.Message}",
-                    "Ошибка",
-                    MessageBoxButton.OK
-                );
+                _dialogService.ShowMessage($"Ошибка при обработке документа: {ex.Message}","Ошибка",MessageBoxButton.OK);
             }
         }
+        [RelayCommand]
         private void OpenDocument()
         {
             if (SelectedDocument?.FilePath != null && File.Exists(SelectedDocument.FilePath))
             {
-                Process.Start(new ProcessStartInfo(SelectedDocument.FilePath) { UseShellExecute = true });
+                try
+                {
+                    Process.Start(new ProcessStartInfo(SelectedDocument.FilePath) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    _dialogService.ShowMessage($"Не удалось открыть файл: {ex.Message}", "Ошибка", MessageBoxButton.OK);
+                }
             }
         }
 
@@ -79,15 +85,14 @@ namespace EditorApp.source
                 FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent);
                 if (string.IsNullOrWhiteSpace(FormattedBibliography))
                 {
-                    var result = _dialogService.ShowMessage(
-                        "Список литературы не был отформатирован. Всё равно сохранить?",
-                        "Предупреждение",
-                        MessageBoxButton.YesNo
-                    );
+                    var result = _dialogService.ShowMessage("Список литературы не был отформатирован. Всё равно сохранить?", "Предупреждение",MessageBoxButton.YesNo);
                     if (result == MessageBoxResult.No)
+                    {
                         return;
+                    }                       
                 }
                 await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
+                var messageResult = _dialogService.ShowMessage("Файл сохранён", "Готово", MessageBoxButton.OK);
             }
             catch (Exception ex)
             {
@@ -102,7 +107,6 @@ namespace EditorApp.source
             _formatService = formatService;
             SelectedDocument = new Document();
         }
-
 
     }
 

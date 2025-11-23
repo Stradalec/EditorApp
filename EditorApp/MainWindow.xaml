@@ -302,6 +302,10 @@
         <TextBlock Style="{DynamicResource WhiteTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
+        <Button Template="{DynamicResource TextButton1}"  Command= "{Binding OpenDocumentCommand}" >Открыть загруженный файл</Button>
+        <TextBlock Style="{DynamicResource WhiteTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource TextButton1}">Выбор шаблона</Button>
         <TextBlock Text="Гост номер.docx" Style="{DynamicResource WhiteTextBlock}"/>
       </StackPanel>

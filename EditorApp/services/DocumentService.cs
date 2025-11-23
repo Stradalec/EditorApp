@@ -14,7 +14,10 @@ namespace EditorApp.services
         public async Task<string> ExtractBibliographyAsync(string filePath)
         {
             if (!File.Exists(filePath))
+            {
                 return "Файл не найден.";
+            }
+                
 
             return await Task.Run(() => {
                 StringBuilder result = new StringBuilder();
@@ -24,7 +27,10 @@ namespace EditorApp.services
                 {
                     using var document = WordprocessingDocument.Open(filePath, false);
                     var body = document.MainDocumentPart?.Document.Body;
-                    if (body == null) return "Документ пустой или повреждён.";
+                    if (body == null) 
+                    {
+                        return "Документ пустой или повреждён.";
+                    } 
 
                     foreach (var element in body.Elements())
                     {
@@ -32,8 +38,7 @@ namespace EditorApp.services
                         {
                             string text = paragraph.InnerText;
 
-                            if (!foundBibliography &&
-                                text.Contains("Список литературы", StringComparison.OrdinalIgnoreCase))
+                            if (!foundBibliography && text.Contains("Список литературы", StringComparison.OrdinalIgnoreCase))
                             {
                                 foundBibliography = true;
                                 continue;
@@ -61,8 +66,11 @@ namespace EditorApp.services
 
         public async Task SaveAsProcessedAsync(string originalPath, string bibliographyText, string suffix = "_Обработано")
         {
-            if (!File.Exists(originalPath))
+            if (!File.Exists(originalPath)) 
+            {
                 throw new FileNotFoundException("Файл не найден", originalPath);
+            }
+                
 
             string directory = Path.GetDirectoryName(originalPath)!;
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalPath);
@@ -81,37 +89,25 @@ namespace EditorApp.services
         {
             using var document = WordprocessingDocument.Open(docxPath, true); 
             var body = document.MainDocumentPart!.Document.Body;
-
+            Paragraph samplePara = GetFirstBibliographyParagraph(document);
+            var items = bibliographyText.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
             body.AppendChild(new Paragraph());
 
-            body.AppendChild(new Paragraph(
-                 new Run(
-            new RunProperties(
-                new Bold(), 
-                new FontSize() { Val = "28" } 
-            ),
-            new Text("Список литературы")
-        )
-            ));
-            body.AppendChild(new Paragraph()); 
-
-
-            foreach (var line in bibliographyText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            foreach (var item in items)
             {
-                var trimmedLine = line.Trim();
-                if (string.IsNullOrWhiteSpace(trimmedLine) ||
-                    trimmedLine.StartsWith("[Элемент:") ||
-                    trimmedLine.Contains("не найден", StringComparison.OrdinalIgnoreCase)) continue;
+                if (samplePara != null)
+                {
 
-                var paragraph = new Paragraph(
-                    new Run(new Text(trimmedLine))
-                );
+                    body.AppendChild(CloneFormattedParagraph(item, samplePara));
+                }
+                else
+                {
 
-                body.AppendChild(paragraph);
+                    body.AppendChild(new Paragraph(new Run(new Text(item))));
+                }
             }
 
-
-            document.MainDocumentPart!.Document.Save();
+            document.MainDocumentPart.Document.Save();
         }
 
         private void OpenWithDefaultApp(string path)
@@ -126,6 +122,57 @@ namespace EditorApp.services
             {
                 throw new InvalidOperationException($"Не удалось открыть файл: {ex.Message}", ex);
             }
+        }
+        private Paragraph GetFirstBibliographyParagraph(WordprocessingDocument inputDocument, string startKeyword = "Список литературы")
+        {
+            var body = inputDocument.MainDocumentPart.Document.Body;
+            bool foundStart = false;
+
+            foreach (var element in body.Elements())
+            {
+                if (element is Paragraph paragraph)
+                {
+                    string text = paragraph.InnerText;
+
+                    if (!foundStart && text.Contains(startKeyword, StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundStart = true;
+                        continue;
+                    }
+
+                    if (foundStart && !string.IsNullOrWhiteSpace(text))
+                    {
+                        
+                        return paragraph;
+                    }
+                }
+            }
+
+            return null; 
+        }
+        private Paragraph CloneFormattedParagraph(string text, Paragraph sampleParagraph)
+        {
+            
+            var newParagraph = new Paragraph();
+
+            
+            if (sampleParagraph.ParagraphProperties != null)
+            {
+                newParagraph.ParagraphProperties = (ParagraphProperties)sampleParagraph.ParagraphProperties.CloneNode(true);
+            }
+
+            
+            var run = new Run(new Text(text));
+
+            
+            var sampleRun = sampleParagraph.Descendants<Run>().FirstOrDefault();
+            if (sampleRun?.RunProperties != null)
+            {
+                run.RunProperties = (RunProperties)sampleRun.RunProperties.CloneNode(true);
+            }
+
+            newParagraph.AppendChild(run);
+            return newParagraph;
         }
     }
 }

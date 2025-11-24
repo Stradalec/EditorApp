@@ -85,18 +85,33 @@ namespace EditorApp.services
 
         private async Task<string> FormatSingleItemAsync(string item)
         {
-            var request = new ListRequest { text = item };
-
-            var response = await _httpClient.PostAsJsonAsync("", request);
-
-            if (response.IsSuccessStatusCode)
+            string reason = ""; 
+            try
             {
-                var result = await response.Content.ReadFromJsonAsync<ListResponse>();
-                return result?.result?.Trim() ?? item;
-            }
+                var request = new ListRequest { text = item };
+                var response = await _httpClient.PostAsJsonAsync("", request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ListResponse>();
+                    return result?.result?.Trim() ?? item;
+                }
 
-            var error = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"Ошибка при обработке пункта: {response.StatusCode}\n{error}");
+                var error = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Ошибка при обработке пункта: {response.StatusCode}\n{error}");
+            }
+            catch (HttpRequestException ex)
+            {
+                reason = $" Сетевая ошибка: {ex.Message}";
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                reason = "Таймаут подключения к серверу";
+            }
+            catch (Exception ex)
+            {
+                reason = $"Неизвестная ошибка: {ex.Message}";
+            }
+            return $"Не удалось отформатировать{reason}";
         }
     }
 }

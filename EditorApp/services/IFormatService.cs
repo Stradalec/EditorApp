@@ -8,6 +8,6 @@ namespace EditorApp.services
 {
     public  interface IFormatService
     {
-        Task<string> FormatBibliographyAsync(string rawText);
+        Task<string> FormatBibliographyAsync(string rawText, IProgress<(int current, int total)> progress);
     }
 }

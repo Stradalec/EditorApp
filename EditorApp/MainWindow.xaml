@@ -8,6 +8,7 @@
         Title="Окно" Height="450" Width="346"
         Background="Black">
   <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#FFBEE6FD"/>
     <SolidColorBrush x:Key="Button.MouseOver.Border" Color="#FF3C7FB1"/>
     <SolidColorBrush x:Key="Button.Pressed.Background" Color="#FFC4E5F6"/>
@@ -327,6 +328,23 @@
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource TextButton1}"  Command="{Binding ProcessAndSaveDocumentCommand}">Запуск</Button>
         <Button Template="{DynamicResource TextButton1}">Отмена</Button>
+      </StackPanel>
+      <StackPanel Margin="10">
+        <ProgressBar 
+        Value="{Binding ProgressValue}" 
+        Maximum="{Binding ProgressMaximum}"
+        Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+        Height="15" 
+        Margin="0,5,0,5"
+        IsIndeterminate="False"/>
+
+        <TextBlock 
+        Text="{Binding ProgressText}" 
+        Style="{DynamicResource WhiteTextBlock}"
+        Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+        HorizontalAlignment="Center"
+        FontSize="12"
+        FontStyle="Italic"/>
       </StackPanel>
     </StackPanel>
 

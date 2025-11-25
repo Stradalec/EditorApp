@@ -32,6 +32,15 @@ namespace EditorApp.source
         private string _formattedBibliography = "";
         [ObservableProperty]
         private bool _isProcessing;
+
+        [ObservableProperty]
+        private string _progressText = "";
+
+        [ObservableProperty]
+        private int _progressValue;
+
+        [ObservableProperty]
+        private int _progressMaximum = 100;
         [RelayCommand]
         private async Task LoadDocument()
         {
@@ -82,23 +91,41 @@ namespace EditorApp.source
             try
             {
                 IsProcessing = true;
-                FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent);
-                if (string.IsNullOrWhiteSpace(FormattedBibliography))
+                ProgressMaximum = 100;
+                ProgressValue = 0;
+                ProgressText = "Извлечение списка литературы...";
+
+                ProgressValue = 10;
+                ProgressText = "Отправка на форматирование...";
+                var progress = new Progress<(int current, int total)>(p =>
                 {
-                    var result = _dialogService.ShowMessage("Список литературы не был отформатирован. Всё равно сохранить?", "Предупреждение",MessageBoxButton.YesNo);
-                    if (result == MessageBoxResult.No)
-                    {
-                        return;
-                    }                       
-                }
+                    ProgressValue = p.current;
+                    ProgressMaximum = p.total;
+                    ProgressText = $"Форматирование: {p.current}/{p.total}";
+                });
+                FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, progress);
+
+                ProgressValue = 60;
+                ProgressText = "Сохранение файла...";
+
                 await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
+
+                ProgressValue = 100;
+                ProgressText = "Готово!";
+
             }
             catch (Exception ex)
             {
                 _dialogService.ShowMessage($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK);
             }
+            finally
+            {
+                IsProcessing = false;
+                ProgressValue = 0;
+                ProgressText = "";
+            }
         }
-        
+
         public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService)
         {
             _documentService = documentService;

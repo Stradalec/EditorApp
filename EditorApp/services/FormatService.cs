@@ -1,5 +1,6 @@
 ﻿using DocumentFormat.OpenXml.ExtendedProperties;
 using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Vml;
 using EditorApp.source;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace EditorApp.services
             _httpClient = httpClient;
         }
 
-        public async Task<string> FormatBibliographyAsync(string rawText)
+        public async Task<string> FormatBibliographyAsync(string rawText, IProgress<(int current, int total)> progress)
         {
             if (string.IsNullOrWhiteSpace(rawText))
             {
@@ -33,20 +34,22 @@ namespace EditorApp.services
                 return rawText;
             }
             var formattedItems = new List<string>();
-            foreach (var item in items)
+            int total = items.Count;
+            for (int formatIndex = 0; formatIndex < items.Count; ++formatIndex)
             {
                 try
                 {
-                    var formatted = await FormatSingleItemAsync(item);
+                    var formatted = await FormatSingleItemAsync(items[formatIndex]);
                     if (formatted.EndsWith("[Элемент: sectPr]", StringComparison.OrdinalIgnoreCase))
                     {
                         formatted = formatted.Substring(0, formatted.Length - "[Элемент: sectPr]".Length);
                     }
                     formattedItems.Add(formatted.Trim());
+                    progress?.Report((formatIndex + 1, total));
                 }
                 catch
                 {
-                    formattedItems.Add(item.Trim());
+                    formattedItems.Add(items[formatIndex].Trim());
                 }
             }
             return string.Join("\n", formattedItems);

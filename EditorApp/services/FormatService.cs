@@ -1,4 +1,6 @@
-﻿using EditorApp.source;
+﻿using DocumentFormat.OpenXml.ExtendedProperties;
+using DocumentFormat.OpenXml.Spreadsheet;
+using EditorApp.source;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,36 +57,35 @@ namespace EditorApp.services
             {
                 return new List<string>();
             }
-            text = text.Replace("\r\n", "\n").Replace("\r", "\n");
-            var regex = new Regex(@"(?:^|\n)\s*(?:\[\d+\]|\d+)\s*[\.\)\-\–\—]\s+[А-ЯA-ZЁ]",RegexOptions.Multiline | RegexOptions.Compiled);
+            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
-
-            var matches = regex.Matches(text);
             var items = new List<string>();
-            int startIndex = 0;
-            for (int itemIndex = 0; itemIndex < matches.Count; ++itemIndex)
+            foreach (var line in lines)
             {
-                int matchIndex = matches[itemIndex].Index;
+                var trimmed = line.Trim();
 
-                if (matchIndex == 0) continue;
+                if (string.IsNullOrWhiteSpace(trimmed))
+                    continue;
 
-                string item = text.Substring(startIndex, matchIndex - startIndex).Trim();
-                if (!string.IsNullOrEmpty(item))
-                    items.Add(item);
+                if (trimmed.StartsWith("[Элемент:", StringComparison.OrdinalIgnoreCase))
+                    continue;
 
-                startIndex = matchIndex;
+                if (Regex.IsMatch(trimmed, @"^\d{1,3}[\.\)\-\–\—]\s*$"))
+                    continue;
+
+                items.Add(trimmed);
             }
-
-            string lastItem = text.Substring(startIndex).Trim();
-            if (!string.IsNullOrEmpty(lastItem))
-                items.Add(lastItem);
-
 
             return items;
         }
 
         private async Task<string> FormatSingleItemAsync(string item)
         {
+            if (Regex.IsMatch(item.Trim(), @"^\d{1,3}[\.\)\-\–\—]\s*$"))
+            {
+                return item;
+            }
+
             string reason = ""; 
             try
             {
@@ -93,7 +94,13 @@ namespace EditorApp.services
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<ListResponse>();
-                    return result?.result?.Trim() ?? item;
+                    var formatted = result?.result?.Trim();
+
+                    if (!string.IsNullOrWhiteSpace(formatted))
+                    {
+                        formatted = RemoveExtraSpaces(formatted); 
+                        return formatted;
+                    }
                 }
 
                 var error = await response.Content.ReadAsStringAsync();
@@ -112,6 +119,15 @@ namespace EditorApp.services
                 reason = $"Неизвестная ошибка: {ex.Message}";
             }
             return $"Не удалось отформатировать{reason}";
+        }
+        private string RemoveExtraSpaces(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text;
+
+            text = Regex.Replace(text, @"\s{2,}", " ");
+
+            return text.Trim();
         }
     }
 }

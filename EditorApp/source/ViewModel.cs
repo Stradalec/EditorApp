@@ -92,7 +92,6 @@ namespace EditorApp.source
                     }                       
                 }
                 await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
-                var messageResult = _dialogService.ShowMessage("Файл сохранён", "Готово", MessageBoxButton.OK);
             }
             catch (Exception ex)
             {

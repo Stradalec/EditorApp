@@ -75,7 +75,8 @@ namespace EditorApp.services
             string directory = Path.GetDirectoryName(originalPath)!;
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalPath);
             string extension = Path.GetExtension(originalPath);
-            string outputPath = Path.Combine(directory, $"{fileNameWithoutExt}{suffix}{extension}");
+            string timestamp = DateTime.Now.ToString("HHmmss");
+            string outputPath = Path.Combine(directory, $"{fileNameWithoutExt}{suffix}_{timestamp}{extension}");
 
 
             await Task.Run(() => File.Copy(originalPath, outputPath, overwrite: true));

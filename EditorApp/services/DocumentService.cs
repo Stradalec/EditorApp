@@ -37,8 +37,10 @@ namespace EditorApp.services
                         if (element is Paragraph paragraph)
                         {
                             string text = paragraph.InnerText;
+                            string[] keywords = { "Список литературы", "Библиографический список", "Список источников", "Список использованных источников", "список использованной литературы" };
+                            bool containsList = keywords.Any(keyword => text.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 
-                            if (!foundBibliography && text.Contains("Список литературы", StringComparison.OrdinalIgnoreCase))
+                            if (!foundBibliography && containsList)
                             {
                                 foundBibliography = true;
                                 continue;

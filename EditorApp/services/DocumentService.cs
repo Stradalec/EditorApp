@@ -1,4 +1,6 @@
-﻿using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,11 +8,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.Wordprocessing;
 namespace EditorApp.services
 {
     public class DocumentService : IDocumentService
     {
+        private List<string> _oldLiteratureList = new List<string>();
         public async Task<string> ExtractBibliographyAsync(string filePath)
         {
             if (!File.Exists(filePath))
@@ -61,8 +63,8 @@ namespace EditorApp.services
                 {
                     return "Ошибка при чтении документа.";
                 }
-
-                return foundBibliography ? result.ToString().Trim() : "Раздел 'Список литературы' не найден.";
+                _oldLiteratureList = result.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+                return _oldLiteratureList.Count > 0 ? string.Join("\n", _oldLiteratureList) : "Раздел 'Список литературы' не найден.";
             });
         }
 
@@ -95,24 +97,89 @@ namespace EditorApp.services
             Paragraph samplePara = GetFirstBibliographyParagraph(document);
             var items = bibliographyText.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
             body.AppendChild(new Paragraph());
-
-            foreach (var item in items)
+            var newItems = bibliographyText.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+            for(int differenceIndex = 0; differenceIndex < newItems.Count; differenceIndex++)
             {
+                string newItem = newItems[differenceIndex];
+                string oldItem = differenceIndex < _oldLiteratureList.Count ? _oldLiteratureList[differenceIndex] : "";
+
                 if (samplePara != null)
                 {
 
-                    body.AppendChild(CloneFormattedParagraph(item, samplePara));
+                    body.AppendChild(CreateDiffParagraph(newItem, oldItem, samplePara));
                 }
                 else
                 {
-
-                    body.AppendChild(new Paragraph(new Run(new Text(item))));
+                    body.AppendChild(new Paragraph(new Run(new Text(newItem))));
                 }
             }
 
             document.MainDocumentPart.Document.Save();
         }
+        private Paragraph CreateDiffParagraph(string newItem, string oldItem, Paragraph samplePara)
+        {
+            var paragraph = new Paragraph();
 
+            if (samplePara.ParagraphProperties != null)
+            {
+                paragraph.ParagraphProperties = (ParagraphProperties)samplePara.ParagraphProperties.CloneNode(true);
+            }
+
+            var baseRunProps = GetBaseRunProperties(samplePara);
+            var oldWords = oldItem.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var newWords = newItem.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            int oldIndex = 0;
+
+            for (int differenceIndex = 0; differenceIndex < newWords.Length; differenceIndex++)
+            {
+                string word = newWords[differenceIndex];
+
+                bool isMatch = oldIndex < oldWords.Length && AreWordsEqual(word, oldWords[oldIndex]);
+
+
+                var run = new Run();
+                run.RunProperties = (RunProperties)baseRunProps.CloneNode(true); 
+
+
+                if (isMatch)
+                {
+                    oldIndex++;
+                }
+                else
+                {
+                    run.RunProperties.Append(new Color() { Val = "00CC00" }); 
+                }
+
+                run.AppendChild(new Text(word + (differenceIndex   < newWords.Length - 1 ? " " : ""))); 
+                paragraph.AppendChild(run);
+                if (differenceIndex < newWords.Length - 1)
+                {
+                    var space = new Text(" ");
+                    space.Space = SpaceProcessingModeValues.Preserve;
+                    run.AppendChild(space);
+                }
+ 
+            }
+            return paragraph;
+        }
+        private RunProperties GetBaseRunProperties(Paragraph samplePara)
+        {
+            var sampleRun = samplePara.Descendants<Run>().FirstOrDefault();
+            return sampleRun?.RunProperties != null
+                ? (RunProperties)sampleRun.RunProperties.CloneNode(true)
+                : new RunProperties(new FontSize() { Val = "24" }); 
+        }
+        private bool AreWordsEqual(string a, string b)
+        {
+            var cleanA = RemovePunctuation(a).ToLowerInvariant();
+            var cleanB = RemovePunctuation(b).ToLowerInvariant();
+            return cleanA == cleanB;
+        }
+
+        private string RemovePunctuation(string word)
+        {
+            return new string(word.Where(c => !char.IsPunctuation(c)).ToArray());
+        }
         private void OpenWithDefaultApp(string path)
         {
             try

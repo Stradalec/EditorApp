@@ -50,7 +50,11 @@ namespace EditorApp.services
 
                             if (foundBibliography)
                             {
-                                result.AppendLine(text.Trim());
+                                if (!string.IsNullOrWhiteSpace(text))
+                                {
+                                    result.AppendLine(text.Trim());
+                                }
+                                    
                             }
                         }
                         else if (foundBibliography)
@@ -126,8 +130,10 @@ namespace EditorApp.services
             }
 
             var baseRunProps = GetBaseRunProperties(samplePara);
-            var oldWords = oldItem.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var newWords = newItem.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            string NormalizeForSplit(string stringToFormat) => (stringToFormat ?? "").Normalize(System.Text.NormalizationForm.FormKC).Replace('\u00A0', ' ').Replace('\t', ' ').Trim();
+            var oldWords = NormalizeForSplit(oldItem).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var newWords = NormalizeForSplit(newItem).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
             int oldIndex = 0;
 
             for (int differenceIndex = 0; differenceIndex < newWords.Length; differenceIndex++)
@@ -158,6 +164,7 @@ namespace EditorApp.services
                     space.Space = SpaceProcessingModeValues.Preserve;
                     run.AppendChild(space);
                 }
+
  
             }
             return paragraph;
@@ -167,13 +174,13 @@ namespace EditorApp.services
             var sampleRun = samplePara.Descendants<Run>().FirstOrDefault();
             return sampleRun?.RunProperties != null
                 ? (RunProperties)sampleRun.RunProperties.CloneNode(true)
-                : new RunProperties(new FontSize() { Val = "24" }); 
+                : new RunProperties(new FontSize() { Val = "28" }); 
         }
-        private bool AreWordsEqual(string a, string b)
+        private bool AreWordsEqual(string firstString, string secondString)
         {
-            var cleanA = RemovePunctuation(a).ToLowerInvariant();
-            var cleanB = RemovePunctuation(b).ToLowerInvariant();
-            return cleanA == cleanB;
+            var cleanFirstString = RemovePunctuation(firstString).ToLowerInvariant();
+            var cleanSecondString = RemovePunctuation(secondString).ToLowerInvariant();
+            return cleanFirstString == cleanSecondString;
         }
 
         private string RemovePunctuation(string word)

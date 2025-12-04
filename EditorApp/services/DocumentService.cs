@@ -36,9 +36,23 @@ namespace EditorApp.services
 
                     foreach (var element in body.Elements())
                     {
+                        if (element is SectionProperties)
+                        {
+                            if (foundBibliography)
+                            {
+                                break;
+                            }
+                        }
+
                         if (element is Paragraph paragraph)
                         {
                             string text = paragraph.InnerText;
+                            var pageBreak = paragraph.Descendants<Break>().FirstOrDefault(b => b.Type?.Value == BreakValues.Page);
+
+                            if (pageBreak != null && foundBibliography)
+                            {
+                                break;
+                            }
                             string[] keywords = { "Список литературы", "Библиографический список", "Список источников", "Список использованных источников", "список использованной литературы" };
                             bool containsList = keywords.Any(keyword => text.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 

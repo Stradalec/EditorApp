@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EditorApp"
         mc:Ignorable="d"
-        Title="Окно" Height="450" Width="346"
-        Background="Black">
+        Title="Окно" Height="600" Width="600"
+        Background="LightGray">
   <Window.Resources>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#FFBEE6FD"/>
@@ -39,10 +39,18 @@
         </Trigger>
       </ControlTemplate.Triggers>
     </ControlTemplate>
-    <Style x:Key="WhiteTextBlock" TargetType="{x:Type TextBlock}">
+    <Style TargetType="{x:Type Button}">
+      <Setter Property="FontSize" Value="24"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Padding" Value="12"/>
+      <Setter Property="Padding" Value="20,10"/>
+      <Setter Property="Margin" Value="15"/>
+    </Style>
+    <Style x:Key="BlackTextBlock" TargetType="{x:Type TextBlock}">
+      <Setter Property="FontSize" Value="24"/>
       <Setter Property="TextWrapping" Value="NoWrap"/>
       <Setter Property="TextTrimming" Value="None"/>
-      <Setter Property="Foreground" Value="White"></Setter>
+      <Setter Property="Foreground" Value="Black"></Setter>
       <Setter Property="VerticalAlignment" Value="Center"></Setter>
     </Style>
     <Style x:Key="GridStyle" TargetType="{x:Type Grid}">
@@ -98,7 +106,7 @@
       <Setter Property="Foreground" Value="White"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="HorizontalAlignment" Value="Center"/>
-      <Setter Property="FontSize" Value="16"/>
+      <Setter Property="FontSize" Value="24"/>
     </Style>
     <Style x:Key="FocusVisual">
       <Setter Property="Control.Template">
@@ -124,11 +132,11 @@
       <Setter Property="BorderBrush" Value="Transparent"/>
       <Setter Property="BorderThickness" Value="0.1"/>
       <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
-      <Setter Property="Margin" Value="2,2,2,2"/>
+      <Setter Property="Margin" Value="5,5,5,5"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="{x:Type ListBoxItem}">
-            <Border x:Name="Bd" Background="Black"  BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
+            <Border x:Name="Bd" Background="LightGray"  BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
               <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -235,54 +243,93 @@
     <SolidColorBrush x:Key="OptionMark.Disabled.Border" Color="#FFBCBCBC"/>
     <SolidColorBrush x:Key="OptionMark.Disabled.Glyph" Color="#FF707070"/>
     <Style x:Key="CheckBox" TargetType="{x:Type CheckBox}">
-      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual1}"/>
-      <Setter Property="Background" Value="Black"/>
-      <Setter Property="BorderBrush" Value="White"/>
-      <Setter Property="Foreground" Value="White"/>
-      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="FontSize" Value="24"/>
+      <Setter Property="Foreground" Value="Black"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Padding" Value="8,6"/>
+      <Setter Property="Margin" Value="5"/>
+      <Setter Property="MinHeight" Value="36"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="{x:Type CheckBox}">
-            <Grid x:Name="templateRoot" Background="Transparent" SnapsToDevicePixels="True">
+            <Grid x:Name="templateRoot" SnapsToDevicePixels="True" ShowGridLines="False">
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <!-- Фиксированная ширина для галочки -->
+                <ColumnDefinition Width="30"/>
+                <!-- Основной контент (текст) -->
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
-              <Border x:Name="checkBoxBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="2" BorderThickness="{TemplateBinding BorderThickness}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+
+              <!-- Индикатор (галочка) -->
+              <Border x:Name="checkBoxBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Width="24" Height="24"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
                 <Grid x:Name="markGrid">
-                  <Path x:Name="optionMark" Data="F1 M 9.97498,1.22334L 4.6983,9.09834L 4.52164,9.09834L 0,5.19331L 1.27664,3.52165L 4.255,6.08833L 8.33331,1.52588e-005L 9.97498,1.22334 Z " Fill="White" Margin="1" Opacity="0" Stretch="None"/>
-                  <Rectangle x:Name="indeterminateMark" Fill="{StaticResource OptionMark.Static.Glyph}" Margin="2" Opacity="0"/>
+                  <!-- Галочка -->
+                  <Path x:Name="optionMark"
+                                  Data="M 9.975,1.223 L 4.698,9.098 L 4.522,9.098 L 0,5.193 L 1.277,3.522 L 4.255,6.088 L 8.333,0 Z"
+                                  Fill="{StaticResource OptionMark.Static.Glyph}"
+                                  Margin="3"
+                                  Stretch="Fill"
+                                  Opacity="0"/>
+                  <!-- Промежуточное состояние (полугалочка) -->
+                  <Rectangle x:Name="indeterminateMark"
+                                       Fill="{StaticResource OptionMark.Static.Glyph}"
+                                       Margin="6,8"
+                                       Opacity="0"/>
                 </Grid>
               </Border>
-              <ContentPresenter x:Name="contentPresenter" Grid.Column="1" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+
+              <!-- Текст рядом с чекбоксом -->
+              <ContentPresenter x:Name="contentPresenter"
+                                      Grid.Column="1"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      RecognizesAccessKey="True"
+                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
             </Grid>
+
+            <!-- Визуальные триггеры -->
             <ControlTemplate.Triggers>
               <Trigger Property="HasContent" Value="true">
+                <Setter Property="Padding" Value="32,6,6,6"/>
                 <Setter Property="FocusVisualStyle" Value="{StaticResource OptionMarkFocusVisual}"/>
-                <Setter Property="Padding" Value="4,-1,0,0"/>
               </Trigger>
+
               <Trigger Property="IsMouseOver" Value="true">
                 <Setter Property="Background" TargetName="checkBoxBorder" Value="{StaticResource OptionMark.MouseOver.Background}"/>
                 <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{StaticResource OptionMark.MouseOver.Border}"/>
                 <Setter Property="Fill" TargetName="optionMark" Value="{StaticResource OptionMark.MouseOver.Glyph}"/>
                 <Setter Property="Fill" TargetName="indeterminateMark" Value="{StaticResource OptionMark.MouseOver.Glyph}"/>
               </Trigger>
+
               <Trigger Property="IsEnabled" Value="false">
                 <Setter Property="Background" TargetName="checkBoxBorder" Value="{StaticResource OptionMark.Disabled.Background}"/>
                 <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{StaticResource OptionMark.Disabled.Border}"/>
                 <Setter Property="Fill" TargetName="optionMark" Value="{StaticResource OptionMark.Disabled.Glyph}"/>
                 <Setter Property="Fill" TargetName="indeterminateMark" Value="{StaticResource OptionMark.Disabled.Glyph}"/>
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
               </Trigger>
+
               <Trigger Property="IsPressed" Value="true">
                 <Setter Property="Background" TargetName="checkBoxBorder" Value="{StaticResource OptionMark.Pressed.Background}"/>
                 <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{StaticResource OptionMark.Pressed.Border}"/>
                 <Setter Property="Fill" TargetName="optionMark" Value="{StaticResource OptionMark.Pressed.Glyph}"/>
                 <Setter Property="Fill" TargetName="indeterminateMark" Value="{StaticResource OptionMark.Pressed.Glyph}"/>
               </Trigger>
+
               <Trigger Property="IsChecked" Value="true">
                 <Setter Property="Opacity" TargetName="optionMark" Value="1"/>
                 <Setter Property="Opacity" TargetName="indeterminateMark" Value="0"/>
               </Trigger>
+
               <Trigger Property="IsChecked" Value="{x:Null}">
                 <Setter Property="Opacity" TargetName="optionMark" Value="0"/>
                 <Setter Property="Opacity" TargetName="indeterminateMark" Value="1"/>
@@ -292,6 +339,66 @@
         </Setter.Value>
       </Setter>
     </Style>
+    <SolidColorBrush x:Key="Button.MouseOver.Background1" Color="#FFBEE6FD"/>
+    <SolidColorBrush x:Key="Button.MouseOver.Border1" Color="#FF3C7FB1"/>
+    <SolidColorBrush x:Key="Button.Pressed.Background1" Color="#FFC4E5F6"/>
+    <SolidColorBrush x:Key="Button.Pressed.Border1" Color="#FF2C628B"/>
+    <SolidColorBrush x:Key="Button.Disabled.Background1" Color="#FFF4F4F4"/>
+    <SolidColorBrush x:Key="Button.Disabled.Border1" Color="#FFADB2B5"/>
+    <SolidColorBrush x:Key="Button.Disabled.Foreground1" Color="#FF838383"/>
+    <ControlTemplate x:Key="StartButtonsGroup" TargetType="{x:Type ButtonBase}">
+      <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"   BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" SnapsToDevicePixels="true">
+        <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="Button.IsDefaulted" Value="true">
+          <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+        </Trigger>
+        <Trigger Property="IsMouseOver" Value="true">
+          <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background1}"/>
+          <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border1}"/>
+        </Trigger>
+        <Trigger Property="IsPressed" Value="true">
+          <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background1}"/>
+          <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border1}"/>
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="false">
+          <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background1}"/>
+          <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border1}"/>
+          <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground1}"/>
+        </Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <SolidColorBrush x:Key="Button.MouseOver.Background2" Color="#FFBEE6FD"/>
+    <SolidColorBrush x:Key="Button.MouseOver.Border2" Color="#FF3C7FB1"/>
+    <SolidColorBrush x:Key="Button.Pressed.Background2" Color="#FFC4E5F6"/>
+    <SolidColorBrush x:Key="Button.Pressed.Border2" Color="#FF2C628B"/>
+    <SolidColorBrush x:Key="Button.Disabled.Background2" Color="#FFF4F4F4"/>
+    <SolidColorBrush x:Key="Button.Disabled.Border2" Color="#FFADB2B5"/>
+    <SolidColorBrush x:Key="Button.Disabled.Foreground2" Color="#FF838383"/>
+    <ControlTemplate x:Key="ButtonTextBorderBold" TargetType="{x:Type ButtonBase}">
+      <Border x:Name="border" Background="White" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="2.5" CornerRadius="10" SnapsToDevicePixels="true">
+        <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="Button.IsDefaulted" Value="true">
+          <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+        </Trigger>
+        <Trigger Property="IsMouseOver" Value="true">
+          <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background2}"/>
+          <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border2}"/>
+        </Trigger>
+        <Trigger Property="IsPressed" Value="true">
+          <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background2}"/>
+          <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border2}"/>
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="false">
+          <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background2}"/>
+          <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border2}"/>
+          <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground2}"/>
+        </Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate>
   </Window.Resources>
   <Grid Style="{DynamicResource GridStyle}">
     <Grid.ColumnDefinitions>
@@ -299,57 +406,53 @@
     </Grid.ColumnDefinitions>
     <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
       <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource TextButton1}"  Command= "{Binding LoadDocumentCommand}" >Загрузка файла</Button>
-        <TextBlock Style="{DynamicResource WhiteTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
+        <Button Template="{DynamicResource ButtonTextBorderBold}"  Command= "{Binding LoadDocumentCommand}" >Загрузить файл</Button>
+        <Button Template="{DynamicResource StartButtonsGroup}"  Command= "{Binding OpenDocumentCommand}" >Открыть</Button>
+        <TextBlock Style="{DynamicResource BlackTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource TextButton1}"  Command= "{Binding OpenDocumentCommand}" >Открыть загруженный файл</Button>
-        <TextBlock Style="{DynamicResource WhiteTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
+        <Button Template="{DynamicResource StartButtonsGroup}">Выбрать шаблон</Button>
+        <TextBlock Text="Гост номер.docx" Style="{DynamicResource BlackTextBlock}"/>
       </StackPanel>
-      <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource TextButton1}">Выбор шаблона</Button>
-        <TextBlock Text="Гост номер.docx" Style="{DynamicResource WhiteTextBlock}"/>
-      </StackPanel>
-      <TextBlock Text="Настройка шаблона" Style="{DynamicResource WhiteHeader}"/>
       <ListBox Style="{DynamicResource ListBox}">
-        <ListBoxItem Style="{DynamicResource ListBoxItem}">
+        <ListBoxItem Style="{DynamicResource ListBoxItem}" Padding="5">
           <StackPanel Orientation="Horizontal">
-            <CheckBox Style="{DynamicResource CheckBox}"></CheckBox>
-            <TextBlock Style="{DynamicResource WhiteTextBlock}" Text="Форматирование списка литературы"/>
+            <CheckBox Style="{DynamicResource CheckBox}" Width="24"/>
+            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="15,0,0,0" Text="Форматирование списка литературы"/>
           </StackPanel>
         </ListBoxItem>
-        <ListBoxItem Style="{DynamicResource ListBoxItem}">
+        <ListBoxItem Style="{DynamicResource ListBoxItem}"  Padding="5">
           <StackPanel Orientation="Horizontal">
-            <CheckBox Style="{DynamicResource CheckBox}"></CheckBox>
-            <TextBlock Style="{DynamicResource WhiteTextBlock}" Text="Работа с отступами"/>
+            <CheckBox Style="{DynamicResource CheckBox}" Width="24"></CheckBox>
+            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="15,0,0,0" Text="Работа с отступами"/>
           </StackPanel>
         </ListBoxItem>
       </ListBox>
-      <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource TextButton1}"  Command="{Binding ProcessAndSaveDocumentCommand}">Запуск</Button>
-        <Button Template="{DynamicResource TextButton1}">Отмена</Button>
-      </StackPanel>
+      <DockPanel LastChildFill="False" HorizontalAlignment="Left">
+        <Button DockPanel.Dock="Left" Template="{DynamicResource ButtonTextBorderBold}"  Command="{Binding ProcessAndSaveDocumentCommand}">Запустить</Button>
+        <Button DockPanel.Dock="Right" Template="{DynamicResource TextButton1}">Отменить запуск</Button>
+      </DockPanel>
       <StackPanel Margin="10">
         <ProgressBar 
         Value="{Binding ProgressValue}" 
         Maximum="{Binding ProgressMaximum}"
         Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
-        Height="15" 
+        Height="25" 
         Margin="0,5,0,5"
         IsIndeterminate="False"/>
 
         <TextBlock 
         Text="{Binding ProgressText}" 
-        Style="{DynamicResource WhiteTextBlock}"
+        Style="{DynamicResource BlackTextBlock}"
         Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
         HorizontalAlignment="Center"
-        FontSize="12"
+        FontSize="24"
         FontStyle="Italic"/>
       </StackPanel>
     </StackPanel>
 
   </Grid>
-  
+
 
 
 

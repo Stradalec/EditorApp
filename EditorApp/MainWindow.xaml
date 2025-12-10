@@ -418,13 +418,13 @@
         <ListBoxItem Style="{DynamicResource ListBoxItem}" Padding="5">
           <StackPanel Orientation="Horizontal">
             <CheckBox Style="{DynamicResource CheckBox}" Width="24"/>
-            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="15,0,0,0" Text="Форматирование списка литературы"/>
+            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Форматирование списка литературы"/>
           </StackPanel>
         </ListBoxItem>
         <ListBoxItem Style="{DynamicResource ListBoxItem}"  Padding="5">
           <StackPanel Orientation="Horizontal">
             <CheckBox Style="{DynamicResource CheckBox}" Width="24"></CheckBox>
-            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="15,0,0,0" Text="Работа с отступами"/>
+            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Работа с отступами"/>
           </StackPanel>
         </ListBoxItem>
       </ListBox>

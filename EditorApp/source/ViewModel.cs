@@ -56,6 +56,12 @@ namespace EditorApp.source
             try
             {
                 string bibliography = await _documentService.ExtractBibliographyAsync(filePath);
+                if (bibliography.Contains("не поддерживается") || bibliography.Contains("не найден") ||  bibliography.Contains("повреждён") || bibliography.Contains("ошибка"))
+                {
+                    _dialogService.ShowMessage(bibliography, "Ошибка", MessageBoxButton.OK);
+                    SelectedDocument.BibliographyContent = "";
+                    return; 
+                }
                 SelectedDocument.BibliographyContent = bibliography;
             }
             catch (Exception ex)

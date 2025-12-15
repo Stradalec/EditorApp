@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 namespace EditorApp.services
 {
@@ -19,8 +20,11 @@ namespace EditorApp.services
             {
                 return "Файл не найден.";
             }
-                
 
+            if (Path.GetExtension(filePath).ToLower() == ".doc")
+            {
+                return "Формат .doc не поддерживается. Пожалуйста, сохраните файл как .docx.";
+            }
             return await Task.Run(() => {
                 StringBuilder result = new StringBuilder();
                 bool foundBibliography = false;
@@ -52,6 +56,15 @@ namespace EditorApp.services
                             if (pageBreak != null && foundBibliography)
                             {
                                 break;
+                            }
+
+                            if (foundBibliography)
+                            {
+                                if (Regex.IsMatch(text, @"^(Приложение|Appendix)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"🛑 Остановка: найдено ключевое слово: {text}");
+                                    break;
+                                }
                             }
                             string[] keywords = { "Список литературы", "Библиографический список", "Список источников", "Список использованных источников", "список использованной литературы" };
                             bool containsList = keywords.Any(keyword => text.Contains(keyword, StringComparison.OrdinalIgnoreCase));

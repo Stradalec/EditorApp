@@ -1,0 +1,6 @@
+flask
+requests
+SQLAlchemy
+Flask-SQLAlchemy
+psycopg2-binary
+configparser

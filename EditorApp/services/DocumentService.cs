@@ -62,7 +62,7 @@ namespace EditorApp.services
                             {
                                 if (Regex.IsMatch(text, @"^(Приложение|Appendix)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"🛑 Остановка: найдено ключевое слово: {text}");
+                                    System.Diagnostics.Debug.WriteLine($"Остановка: найдено ключевое слово: {text}");
                                     break;
                                 }
                             }

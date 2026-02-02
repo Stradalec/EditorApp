@@ -5,6 +5,10 @@ import logging
 from functools import wraps
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+import os  
+import threading
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler  
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
@@ -40,7 +44,40 @@ with open(prompt_path, 'r', encoding='utf-8') as f:
 app = Flask(__name__)
 API_KEY = config['server']['api_key']
 MODEL_API = server_model_api
-MAX_INPUT_LENGTH = 2048  
+MAX_INPUT_LENGTH = 2048
+class PromptFileHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.src_path == os.path.abspath(prompt_path):
+            logger.info(f"Обнаружено изменение файла промпта: {prompt_path}")
+            try:
+                with open(prompt_path, 'r', encoding='utf-8') as f:
+                    new_prompt = f.read()
+                
+                global system_prompt
+                system_prompt = new_prompt
+                
+                logger.info("Системный промпт успешно обновлен без перезапуска сервера")
+                
+            except Exception as e:
+                logger.error(f"Ошибка при обновлении промпта: {e}")
+def start_file_watcher():
+    event_handler = PromptFileHandler()
+    
+    observer = Observer()
+    
+    prompt_dir = os.path.dirname(os.path.abspath(prompt_path))
+    if not prompt_dir:  
+        prompt_dir = "."
+    
+
+    observer.schedule(event_handler, path=prompt_dir, recursive=False)
+    
+
+    observer.start()
+    logger.info(f"Наблюдатель запущен для отслеживания файла: {prompt_path}")
+    
+    return observer
+
 def require_api_key(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -51,6 +88,7 @@ def require_api_key(f):
             return jsonify({"error": "Invalid or missing API key"}), 401
         return f(*args, **kwargs)
     return decorated
+
 @app.route("/format", methods=["POST"])
 @require_api_key
 def format_text():
@@ -76,7 +114,6 @@ def format_text():
             "stop": ["<|im_end|>", "<tool_call>"],
             "stream": False
         }
-        logger.info(text)
         response = requests.post(MODEL_API, json=payload, timeout = 60)
         response.raise_for_status()
         result = response.json()
@@ -102,4 +139,16 @@ def format_text():
         return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=44752, debug=False,threaded=True)
+    try:
+        observer = start_file_watcher()
+        
+        logger.info("Сервер запускается...")
+        
+        app.run(host="0.0.0.0", port=44752, debug=False, threaded=True)
+        
+    except KeyboardInterrupt:
+        logger.info("Остановка наблюдателя...")
+        observer.stop()
+        
+    except Exception as e:
+        logger.error(f"Ошибка при запуске: {e}")

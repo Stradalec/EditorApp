@@ -2,6 +2,7 @@
 using EditorApp.source;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -42,6 +43,40 @@ namespace EditorApp
             DataContext = new ApplicationViewModel(documentService, dialogService, formatService);
         }
 
-
+        private void HandleDrag(object sender, DragEventArgs dragEvent)
+        {
+            if (dragEvent.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] dragFiles = (string[])dragEvent.Data.GetData(DataFormats.FileDrop);
+                if (dragFiles.Length == 1 && System.IO.Path.GetExtension(dragFiles[0]).ToLower() == ".docx")
+                {
+                    dragEvent.Effects = DragDropEffects.Copy;
+                }
+                else
+                {
+                    dragEvent.Effects = DragDropEffects.None;
+                }
+                dragEvent.Handled = true;
+            }
+        }
+        private async void HandleDrop(object sender, DragEventArgs dragEvent)
+        {
+            if (dragEvent.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])dragEvent.Data.GetData(DataFormats.FileDrop);
+                if (files.Length == 1 && System.IO.Path.GetExtension(files[0]).ToLower() == ".docx")
+                {
+                    var viewModel = DataContext as ApplicationViewModel;
+                    if (viewModel != null)
+                    {
+                        await viewModel.LoadDocumentCommand.ExecuteAsync(files[0]);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Поддерживаются только файлы .docx", "Неподдерживаемый формат", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
     }
 }

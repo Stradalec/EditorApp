@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EditorApp"
         mc:Ignorable="d"
-        Title="Окно" Height="600" Width="600"
+        AllowDrop="True"
+        Drop="HandleDrop"
+        Title="Цифровой помощник редактора" Height="600" Width="1000"
         Background="#FFFFF0">
   <Window.Resources>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -255,13 +257,10 @@
           <ControlTemplate TargetType="{x:Type CheckBox}">
             <Grid x:Name="templateRoot" SnapsToDevicePixels="True" ShowGridLines="False">
               <Grid.ColumnDefinitions>
-                <!-- Фиксированная ширина для галочки -->
                 <ColumnDefinition Width="30"/>
-                <!-- Основной контент (текст) -->
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
 
-              <!-- Индикатор (галочка) -->
               <Border x:Name="checkBoxBorder"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
@@ -271,14 +270,13 @@
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center">
                 <Grid x:Name="markGrid">
-                  <!-- Галочка -->
                   <Path x:Name="optionMark"
                                   Data="M 9.975,1.223 L 4.698,9.098 L 4.522,9.098 L 0,5.193 L 1.277,3.522 L 4.255,6.088 L 8.333,0 Z"
                                   Fill="{StaticResource OptionMark.Static.Glyph}"
                                   Margin="3"
                                   Stretch="Fill"
                                   Opacity="0"/>
-                  <!-- Промежуточное состояние (полугалочка) -->
+
                   <Rectangle x:Name="indeterminateMark"
                                        Fill="{StaticResource OptionMark.Static.Glyph}"
                                        Margin="6,8"
@@ -286,7 +284,7 @@
                 </Grid>
               </Border>
 
-              <!-- Текст рядом с чекбоксом -->
+
               <ContentPresenter x:Name="contentPresenter"
                                       Grid.Column="1"
                                       Margin="{TemplateBinding Padding}"
@@ -296,7 +294,7 @@
                                       SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
             </Grid>
 
-            <!-- Визуальные триггеры -->
+
             <ControlTemplate.Triggers>
               <Trigger Property="HasContent" Value="true">
                 <Setter Property="Padding" Value="32,6,6,6"/>
@@ -406,9 +404,9 @@
     </Grid.ColumnDefinitions>
     <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
       <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource ButtonTextBorderBold}"  Command= "{Binding LoadDocumentCommand}" >Загрузить файл</Button>
         <Button Template="{DynamicResource StartButtonsGroup}"  Command= "{Binding OpenDocumentCommand}" >Открыть</Button>
-        <TextBlock Style="{DynamicResource BlackTextBlock}"  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="{Binding SelectedDocument.DocumentName}"/>
+        <TextBlock Text="{Binding SelectedDocument.DocumentName, TargetNullValue='Перетащите .docx файл в окно'}" HorizontalAlignment="Center" VerticalAlignment="Center"
+       Foreground="Black" FontSize="24" FontWeight="SemiBold"/>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource StartButtonsGroup}">Выбрать шаблон</Button>

@@ -42,20 +42,21 @@ namespace EditorApp.source
         [ObservableProperty]
         private int _progressMaximum = 100;
         [RelayCommand]
-        private async Task LoadDocument()
+        private async Task LoadDocument(string filePath = null)
         {
-            if (_dialogService.ShowOpenFileDialog(out string filePath) != true)
+            string path = filePath;
+            if (path == null && _dialogService.ShowOpenFileDialog(out path) != true)
             {
                 return;
             }
-         
+                
             SelectedDocument = new Document {
-                DocumentName = Path.GetFileName(filePath),
-                FilePath = filePath
+                DocumentName = Path.GetFileName(path),
+                FilePath = path
             };
             try
             {
-                string bibliography = await _documentService.ExtractBibliographyAsync(filePath);
+                string bibliography = await _documentService.ExtractBibliographyAsync(path);
                 if (bibliography.Contains("не поддерживается") || bibliography.Contains("не найден") ||  bibliography.Contains("повреждён") || bibliography.Contains("ошибка"))
                 {
                     _dialogService.ShowMessage(bibliography, "Ошибка", MessageBoxButton.OK);

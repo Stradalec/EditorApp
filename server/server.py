@@ -8,7 +8,9 @@ from sqlalchemy.orm import sessionmaker
 import os  
 import threading
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler  
+from watchdog.events import FileSystemEventHandler
+import uuid
+from flask import g    
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
@@ -42,6 +44,16 @@ with open(prompt_path, 'r', encoding='utf-8') as f:
     system_prompt = f.read()
 
 app = Flask(__name__)
+
+@app.before_request
+def add_request_id():
+    g.request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+    
+@app.after_request
+def add_request_id_header(response):
+    response.headers["X-Request-ID"] = g.request_id
+    return response
+
 API_KEY = config['server']['api_key']
 MODEL_API = server_model_api
 MAX_INPUT_LENGTH = 2048
@@ -93,11 +105,11 @@ def require_api_key(f):
 @require_api_key
 def format_text():
     try:
-        logger.info(f"Получен запрос от {request.remote_addr}")
+        logger.info(f"[{g.request_id}] Получен запрос от {request.remote_addr}")
         data = request.get_json(silent=True)
         if data is None:
             logger.warning(f"Не удалось получить данные из запроса")
-            return jsonify({"error": "Некорректный файл JSON"}), 400
+            return jsonify({"error": "Некорректное тело запроса"}), 400
         text = data.get("text", "")
         if not isinstance(text, str):
             return jsonify({"error": "Не удалось получить данные из запроса: данные должны иметь вид текста"}), 400
@@ -106,11 +118,6 @@ def format_text():
             return jsonify({"error": "Запрос не должен быть пуст"}), 400
         if len(text) > MAX_INPUT_LENGTH:
             return jsonify({"error": f"Слишком большой объем текста. Максимальная длина: {MAX_INPUT_LENGTH} знаков."}), 413
-        full_prompt = (
-            f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
-            f"<|im_start|>user\n{text}<|im_end|>\n"
-            f"<|im_start|>assistant\n"
-        )
         payload = {
             "model": "qwen3-vl-8b-instruct", 
             "messages": [
@@ -122,7 +129,7 @@ def format_text():
             "stop": ["<|im_end|>", "<tool_call>"],
             "stream": False
         }
-        response = requests.post(MODEL_API, json=payload, timeout = 60)
+        response = requests.post(MODEL_API, json=payload, timeout = (5, 60))
         response.raise_for_status()
         result = response.json()
 
@@ -139,7 +146,7 @@ def format_text():
     except requests.exceptions.RequestException as e:
         logger.error(f"Ошибка запроса к модели: {type(e).__name__}: {e}", exc_info=True)
         if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Ответ от модели: {e.response.status_code}, {e.response.text}")
+            logger.error(f"Ответ от модели: {e.response.status_code}")
         return jsonify({"error": "Ошибка в работе модели"}), 500
 
     except Exception as e:

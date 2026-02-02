@@ -85,7 +85,7 @@ def require_api_key(f):
         key = request.headers.get("X-API-Key")
         if not key or key != API_KEY:
             logger.warning(f"Неверный или отсутствующий API ключ. IP: {request.remote_addr}")
-            return jsonify({"error": "Invalid or missing API key"}), 401
+            return jsonify({"error": "Неверный или отсутствующий API ключ"}), 401
         return f(*args, **kwargs)
     return decorated
 
@@ -94,10 +94,18 @@ def require_api_key(f):
 def format_text():
     try:
         logger.info(f"Получен запрос от {request.remote_addr}")
-        data = request.get_json()
+        data = request.get_json(silent=True)
+        if data is None:
+            logger.warning(f"Не удалось получить данные из запроса")
+            return jsonify({"error": "Некорректный файл JSON"}), 400
         text = data.get("text", "")
+        if not isinstance(text, str):
+            return jsonify({"error": "Не удалось получить данные из запроса: данные должны иметь вид текста"}), 400
+        text = text.strip()
+        if not text:
+            return jsonify({"error": "Запрос не должен быть пуст"}), 400
         if len(text) > MAX_INPUT_LENGTH:
-            return jsonify({"error": f"Text too long. Max {MAX_INPUT_LENGTH} chars."}), 413
+            return jsonify({"error": f"Слишком большой объем текста. Максимальная длина: {MAX_INPUT_LENGTH} знаков."}), 413
         full_prompt = (
             f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
             f"<|im_start|>user\n{text}<|im_end|>\n"
@@ -122,21 +130,21 @@ def format_text():
         return jsonify({"result": content})
     except requests.exceptions.Timeout:
         logger.error("Таймаут при обращении к LLM")
-        return jsonify({"error": "Model timed out"}), 504
+        return jsonify({"error": "Таймаут при обращении к LLM"}), 504
 
     except requests.exceptions.ConnectionError:
         logger.error("Нет связи с моделью (возможно, не запущена)")
-        return jsonify({"error": "Model service unreachable"}), 502
+        return jsonify({"error": "Модель недоступна"}), 502
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Ошибка запроса к модели: {type(e).__name__}: {e}", exc_info=True)
         if hasattr(e, 'response') and e.response is not None:
             logger.error(f"Ответ от модели: {e.response.status_code}, {e.response.text}")
-        return jsonify({"error": "Model error"}), 500
+        return jsonify({"error": "Ошибка в работе модели"}), 500
 
     except Exception as e:
         logger.exception("Неизвестная ошибка во Flask")
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": "Внутренняя ошибка сервера"}), 500
 
 if __name__ == "__main__":
     try:

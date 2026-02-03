@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 namespace EditorApp.services
 {
-    public class DocumentService : IDocumentService
+    internal class DocumentService : IDocumentService
     {
         private List<string> _oldLiteratureList = new List<string>();
         public async Task<string> ExtractBibliographyAsync(string filePath)

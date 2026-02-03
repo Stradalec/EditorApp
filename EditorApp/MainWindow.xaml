@@ -7,6 +7,8 @@
         mc:Ignorable="d"
         AllowDrop="True"
         Drop="HandleDrop"
+        DragEnter="HandleDragEnter"
+        DragLeave="HandleDragLeave"
         Title="Цифровой помощник редактора" Height="600" Width="1000"
         Background="#FFFFF0">
   <Window.Resources>
@@ -415,7 +417,7 @@
       <ListBox Style="{DynamicResource ListBox}">
         <ListBoxItem Style="{DynamicResource ListBoxItem}" Padding="5">
           <StackPanel Orientation="Horizontal">
-            <CheckBox Style="{DynamicResource CheckBox}" Width="24"/>
+            <CheckBox Style="{DynamicResource CheckBox}" Width="24" IsChecked="{Binding FormatCheckBoxActive, Mode=TwoWay}"/>
             <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Форматирование списка литературы"/>
           </StackPanel>
         </ListBoxItem>

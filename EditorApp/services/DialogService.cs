@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace EditorApp.services
 {
-    public class DialogService : IDialogService
+    internal class DialogService : IDialogService
     {
         public MessageBoxResult ShowMessage(string message, string caption, MessageBoxButton buttons)
         {

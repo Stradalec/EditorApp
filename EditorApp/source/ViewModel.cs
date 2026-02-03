@@ -32,6 +32,8 @@ namespace EditorApp.source
         private string _formattedBibliography = "";
         [ObservableProperty]
         private bool _isProcessing;
+        [ObservableProperty]
+        private FormatOptions isSelectedOptions;
 
         [ObservableProperty]
         private string _progressText = "";

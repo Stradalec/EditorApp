@@ -33,7 +33,7 @@ namespace EditorApp.source
         [ObservableProperty]
         private bool _isProcessing;
         [ObservableProperty]
-        private FormatOptions isSelectedOptions;
+        private FormatOptions _selectedOptions = new FormatOptions();
 
         [ObservableProperty]
         private string _progressText = "";
@@ -91,48 +91,52 @@ namespace EditorApp.source
         [RelayCommand]
         private async Task ProcessAndSaveDocument()
         {
+            
             if (string.IsNullOrEmpty(SelectedDocument?.FilePath))
             {
                 _dialogService.ShowMessage("Файл не выбран.", "Ошибка", MessageBoxButton.OK);
                 return;
             }
-
-            try
+            if (SelectedOptions.IsFormatActive)
             {
-                IsProcessing = true;
-                ProgressMaximum = 100;
-                ProgressValue = 0;
-                ProgressText = "Извлечение списка литературы...";
-
-                ProgressValue = 10;
-                ProgressText = "Отправка на форматирование...";
-                var progress = new Progress<(int current, int total)>(p =>
+                try
                 {
-                    ProgressValue = p.current;
-                    ProgressMaximum = p.total;
-                    ProgressText = $"Форматирование: {p.current}/{p.total}";
-                });
-                FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, progress);
+                    IsProcessing = true;
+                    ProgressMaximum = 100;
+                    ProgressValue = 0;
+                    ProgressText = "Извлечение списка литературы...";
 
-                ProgressValue = 60;
-                ProgressText = "Сохранение файла...";
+                    ProgressValue = 10;
+                    ProgressText = "Отправка на форматирование...";
+                    var progress = new Progress<(int current, int total)>(p =>
+                    {
+                        ProgressValue = p.current;
+                        ProgressMaximum = p.total;
+                        ProgressText = $"Форматирование: {p.current}/{p.total}";
+                    });
+                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, progress);
 
-                await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
+                    ProgressValue = 60;
+                    ProgressText = "Сохранение файла...";
 
-                ProgressValue = 100;
-                ProgressText = "Готово!";
+                    await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
 
+                    ProgressValue = 100;
+                    ProgressText = "Готово!";
+
+                }
+                catch (Exception ex)
+                {
+                    _dialogService.ShowMessage($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK);
+                }
+                finally
+                {
+                    IsProcessing = false;
+                    ProgressValue = 0;
+                    ProgressText = "";
+                }
             }
-            catch (Exception ex)
-            {
-                _dialogService.ShowMessage($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK);
-            }
-            finally
-            {
-                IsProcessing = false;
-                ProgressValue = 0;
-                ProgressText = "";
-            }
+            
         }
 
         public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService)

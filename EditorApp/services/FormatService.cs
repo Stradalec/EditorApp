@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EditorApp.services
@@ -21,7 +22,7 @@ namespace EditorApp.services
             _httpClient = httpClient;
         }
 
-        public async Task<string> FormatBibliographyAsync(string rawText, IProgress<(int current, int total)> progress)
+        public async Task<string> FormatBibliographyAsync(string rawText, IProgress<(int current, int total)> progress, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(rawText))
             {
@@ -37,9 +38,10 @@ namespace EditorApp.services
             int total = items.Count;
             for (int formatIndex = 0; formatIndex < items.Count; ++formatIndex)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
-                    var formatted = await FormatSingleItemAsync(items[formatIndex]);
+                    var formatted = await FormatSingleItemAsync(items[formatIndex], cancellationToken);
                     if (formatted.EndsWith("[Элемент: sectPr]", StringComparison.OrdinalIgnoreCase))
                     {
                         formatted = formatted.Substring(0, formatted.Length - "[Элемент: sectPr]".Length);
@@ -82,7 +84,7 @@ namespace EditorApp.services
             return items;
         }
 
-        private async Task<string> FormatSingleItemAsync(string item)
+        private async Task<string> FormatSingleItemAsync(string item, CancellationToken cancellationToken)
         {
             if (Regex.IsMatch(item.Trim(), @"^\d{1,3}[\.\)\-\–\—]\s*$"))
             {
@@ -93,7 +95,7 @@ namespace EditorApp.services
             try
             {
                 var request = new ListRequest { text = item };
-                var response = await _httpClient.PostAsJsonAsync("", request);
+                var response = await _httpClient.PostAsJsonAsync("", request, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<ListResponse>();
@@ -108,7 +110,7 @@ namespace EditorApp.services
 
                 var error = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Ошибка при обработке пункта: {response.StatusCode}\n{error}");
-            }
+            }           
             catch (HttpRequestException ex)
             {
                 reason = $" Сетевая ошибка: {ex.Message}";
@@ -116,6 +118,11 @@ namespace EditorApp.services
             catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
             {
                 reason = "Таймаут подключения к серверу";
+            }
+            catch (OperationCanceledException ex)
+            {
+                reason = $" Операция отменена пользователем: {ex.Message}";
+                throw;
             }
             catch (Exception ex)
             {

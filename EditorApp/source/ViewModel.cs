@@ -15,6 +15,7 @@ using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Security.Policy;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -37,7 +38,7 @@ namespace EditorApp.source
 
         [ObservableProperty]
         private string _progressText = "";
-
+        private CancellationTokenSource _cancellationTokenSource;
         [ObservableProperty]
         private int _progressValue;
 
@@ -91,7 +92,7 @@ namespace EditorApp.source
         [RelayCommand]
         private async Task ProcessAndSaveDocument()
         {
-            
+            _cancellationTokenSource = new CancellationTokenSource();
             if (string.IsNullOrEmpty(SelectedDocument?.FilePath))
             {
                 _dialogService.ShowMessage("Файл не выбран.", "Ошибка", MessageBoxButton.OK);
@@ -114,7 +115,7 @@ namespace EditorApp.source
                         ProgressMaximum = p.total;
                         ProgressText = $"Форматирование: {p.current}/{p.total}";
                     });
-                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, progress);
+                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, progress, _cancellationTokenSource.Token);
 
                     ProgressValue = 60;
                     ProgressText = "Сохранение файла...";
@@ -124,6 +125,10 @@ namespace EditorApp.source
                     ProgressValue = 100;
                     ProgressText = "Готово!";
 
+                }
+                catch (OperationCanceledException ex)
+                {
+                    _dialogService.ShowMessage($" Операция отменена пользователем", "Оповещение", MessageBoxButton.OK);
                 }
                 catch (Exception ex)
                 {
@@ -138,7 +143,11 @@ namespace EditorApp.source
             }
             
         }
-
+        [RelayCommand]
+        private  void CancelAnyProcess()
+        {
+            _cancellationTokenSource.Cancel();
+        }
         public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService)
         {
             _documentService = documentService;

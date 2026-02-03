@@ -430,7 +430,7 @@
       </ListBox>
       <DockPanel LastChildFill="False" HorizontalAlignment="Left">
         <Button DockPanel.Dock="Left" Template="{DynamicResource ButtonTextBorderBold}"  Command="{Binding ProcessAndSaveDocumentCommand}">Запустить</Button>
-        <Button DockPanel.Dock="Right" Template="{DynamicResource TextButton1}">Отменить запуск</Button>
+        <Button DockPanel.Dock="Right" Template="{DynamicResource TextButton1}" Command="{Binding CancelAnyProcessCommand}">Прервать операцию</Button> 
       </DockPanel>
       <StackPanel Margin="10">
         <ProgressBar 

@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace EditorApp.services
 {
@@ -95,7 +96,7 @@ namespace EditorApp.services
             try
             {
                 var request = new ListRequest { text = item };
-                var response = await _httpClient.PostAsJsonAsync("", request, cancellationToken);
+                var response = await _httpClient.PostAsJsonAsync("format", request, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<ListResponse>();
@@ -138,7 +139,7 @@ namespace EditorApp.services
             text = Regex.Replace(text, @"\s{2,}", " ");
 
             return text.Trim();
-        }
+        }        
     }
 }
 

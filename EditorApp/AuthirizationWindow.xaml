@@ -1,0 +1,37 @@
+﻿<Window x:Class="EditorApp.AuthirizationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EditorApp"
+        mc:Ignorable="d"
+        Title="Зарегистрировать программу" Height="250" Width="400"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+      <TextBlock Text="Имя пользователя"
+                       Margin="0,0,0,4"/>
+      <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"
+                     Height="28"/>
+    </StackPanel>
+    <StackPanel Grid.Row="1" Margin="0,0,0,12">
+      <TextBlock Text="Код приглашения"
+                       Margin="0,0,0,4"/>
+      <TextBox Text="{Binding InviteCode, UpdateSourceTrigger=PropertyChanged}"
+                     Height="28"/>
+    </StackPanel>
+    <Button Grid.Row="3"       
+                Content="Зарегистрироваться"
+                Template="{DynamicResource StartButtonsGroup}"
+                Height="60"
+                HorizontalAlignment="Center"
+                Width="300"
+                Command="{Binding RegisterCommand}"/>
+  </Grid>
+</Window>

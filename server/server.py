@@ -1,5 +1,5 @@
 import configparser
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 import requests
 import logging
 from functools import wraps
@@ -10,7 +10,12 @@ import threading
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import uuid
-from flask import g    
+import hashlib
+import secrets 
+from datetime import datetime, timezone
+import base64
+import hmac
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
@@ -19,24 +24,8 @@ with open('config.ini', 'r', encoding='utf-8') as config_file:
 DATABASE_URL = config['server']['database_api']
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-def is_valid_api_key(api_key: str) -> bool:
-    if not api_key:
-        return False
 
-    db = SessionLocal()
-    try:
-        
-        result = db.execute(
-            text("SELECT 1 FROM users WHERE api_key = :api_key"),
-            {"api_key": api_key}
-        ).first()
-        
-        return result is not None  
-    except Exception as e:
-        logger.error(f"Ошибка при доступе к БД: {e}")
-        return False
-    finally:
-        db.close()
+
 server_model_api = config['server']['model_api']
 system_prompt = ""
 prompt_path = config['model']['system_prompt_path']
@@ -45,6 +34,13 @@ with open(prompt_path, 'r', encoding='utf-8') as f:
 
 app = Flask(__name__)
 
+API_KEY = config['server']['api_key']
+MODEL_API = server_model_api
+MAX_INPUT_LENGTH = 2048
+hash_alg = "sha256"
+hash_iterations = 600000
+hash_dklen = 32
+salt_length = 16
 @app.before_request
 def add_request_id():
     g.request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
@@ -54,9 +50,7 @@ def add_request_id_header(response):
     response.headers["X-Request-ID"] = g.request_id
     return response
 
-API_KEY = config['server']['api_key']
-MODEL_API = server_model_api
-MAX_INPUT_LENGTH = 2048
+
 class PromptFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path == os.path.abspath(prompt_path):
@@ -90,16 +84,147 @@ def start_file_watcher():
     
     return observer
 
+def generate_key():
+    key = secrets.token_urlsafe(32)
+    return key
+    
+def hash_key(key: str) -> str:
+    salt = os.urandom(salt_length)
+    hashed_key = hashlib.pbkdf2_hmac(hash_alg, key.encode("utf-8"), salt, hash_iterations, dklen = hash_dklen)
+    salt_b64 = base64.urlsafe_b64encode(salt).decode("ascii")
+    saved_key_b64 = base64.urlsafe_b64encode(hashed_key).decode("ascii")
+
+    return f"pbkdf2_{hash_alg}${hash_iterations}${salt_b64}${saved_key_b64}"
+
+def verify_key(key_plain: str, stored: str) -> bool:
+    try:
+        scheme, iterations, salt_b64, saved_key_b64 = stored.split("$", 3)
+        if not scheme.startswith("pbkdf2_"):
+            return False
+        hashing_algorytmn = scheme.replace("pbkdf2_", "", 1)
+        iterations = int(iterations)
+        salt = base64.urlsafe_b64decode(salt_b64.encode("ascii"))
+        saved_key_expected = base64.urlsafe_b64decode(saved_key_b64.encode("ascii"))
+    except Exception:
+        return False
+
+    saved_key_current = hashlib.pbkdf2_hmac(
+        hashing_algorytmn,
+        key_plain.encode("utf-8"),
+        salt,
+        iterations,
+        dklen=len(saved_key_expected),
+    )
+    return hmac.compare_digest(saved_key_current, saved_key_expected)
+    
 def require_api_key(f):
     @wraps(f)
     def decorated(*args, **kwargs):
 
-        key = request.headers.get("X-API-Key")
-        if not key or key != API_KEY:
-            logger.warning(f"Неверный или отсутствующий API ключ. IP: {request.remote_addr}")
-            return jsonify({"error": "Неверный или отсутствующий API ключ"}), 401
-        return f(*args, **kwargs)
+        api_key_plain = (request.headers.get("X-API-Key") or "").strip()
+        if not api_key_plain:
+            logger.warning(f"[{g.request_id}] отсутствует API ключ. IP: {request.remote_addr}")
+            return jsonify({"error": "Неверный или отсутствующий API ключ", "request_id": g.request_id}), 401
+        db = SessionLocal()
+        try:
+            
+            rows = db.execute(text("""
+                SELECT key_hash
+                FROM api_keys
+            """)).scalars().all()
+
+            ok = any(verify_key(api_key_plain, stored) for stored in rows)
+            if not ok:
+                logger.warning(f"[{g.request_id}] неверный API ключ. IP: {request.remote_addr}")
+                return jsonify({"error": "Неверный или отсутствующий API ключ", "request_id": g.request_id}), 401
+
+            return f(*args, **kwargs)
+        except Exception:
+            logger.exception(f"[{g.request_id}] ошибка проверки API ключа")
+            return jsonify({"error": "Внутренняя ошибка сервера", "request_id": g.request_id}), 500
+        finally:
+            db.close()
     return decorated
+    
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+    invite_code = (data.get("invite_code") or "").strip()
+    user_name = (data.get("user_name") or "").strip()
+    role = "user"  
+    logger.warning(f"Начался запрос")
+    if not invite_code or not user_name:
+        return jsonify({"error": "Нужны invite_code и user_name", "request_id": g.request_id}), 400
+
+    invite_hash = invite_code
+    logger.warning(f"Захешил инвайт")
+    db = SessionLocal()
+    try:
+        
+        with db.begin():
+            
+            row = db.execute(text("""
+                select id, expires_at, used_at
+                from invites
+                where code_hash = :h
+                for update
+            """), {"h": invite_hash}).mappings().first()
+            logger.warning(f"Залез в базу")
+            if row is None:
+                logger.warning(f"Нету такого")
+                return jsonify({"error": "Инвайт-код не найден", "request_id": g.request_id}), 400
+
+            if row["used_at"] is not None:
+                logger.warning(f"Уже использован")
+                return jsonify({"error": "Инвайт-код уже использован", "request_id": g.request_id}), 400
+
+            logger.warning(f"Проверяю, не истёк ли")
+            expired = db.execute(text("""
+                select (expires_at <= now()) as expired
+                from invites
+                where id = :id
+            """), {"id": row["id"]}).scalar()
+            
+            if expired:
+                logger.warning(f"Уже истёк")
+                return jsonify({"error": "Срок действия инвайта истёк", "request_id": g.request_id}), 400
+
+            logger.warning(f"Создаю юзера")
+            user_id = db.execute(text("""
+                insert into users (user_name, role)
+                values (:user_name, :role)
+                returning id
+            """), {"user_name": user_name, "role": role}).scalar()
+
+            
+            api_key_plain = generate_key()
+            api_key_hash = hash_key(api_key_plain)
+
+            db.execute(text("""
+                insert into api_keys (user_id, key_hash)
+                values (:user_id, :key_hash)
+            """), {"user_id": user_id, "key_hash": api_key_hash})
+
+            
+            db.execute(text("""
+                update invites
+                set used_at = now(), used_by_user_id = :user_id
+                where id = :id
+            """), {"user_id": user_id, "id": row["id"]})
+
+        
+        return jsonify({
+            "user_name": user_name,
+            "api_key": api_key_plain
+        }), 201
+
+    except Exception:
+        logger.exception(f"[{g.request_id}] register failed")
+        return jsonify({"error": "Внутренняя ошибка сервера", "request_id": g.request_id}), 500
+    finally:
+        db.close()
+
+
 
 @app.route("/format", methods=["POST"])
 @require_api_key

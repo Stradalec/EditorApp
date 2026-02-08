@@ -30,7 +30,7 @@ namespace EditorApp.source
         [RelayCommand]
         private async Task Register()
         {
-            var result = await _authService.Register(userName, inviteCode);
+            var result = await _authService.Register(UserName, InviteCode);
             if (result != "Успех")
             {
                 _dialogService.ShowMessage(result, "Ошибка регистрации", MessageBoxButton.OK);

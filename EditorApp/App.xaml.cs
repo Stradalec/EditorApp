@@ -30,6 +30,8 @@ namespace EditorApp
             var dialogService = new DialogService();
             var authorizationService = new AuthService(httpClient, keyStore);
             var savedKey = keyStore.Load();
+            var mainWindow = new MainWindow();
+            MainWindow = mainWindow;
             if (string.IsNullOrEmpty(savedKey))
             {
                 AuthViewModel authorizationModel = new AuthViewModel(authorizationService, dialogService);
@@ -55,8 +57,7 @@ namespace EditorApp
             var documentService = new DocumentService();
             
             var createdViewModel = new ApplicationViewModel(documentService, dialogService, formatService);
-            
-            var mainWindow = new MainWindow();
+            ;
             mainWindow.DataContext = createdViewModel;
             mainWindow.Show();
         }

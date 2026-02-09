@@ -9,7 +9,12 @@ namespace EditorApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        
+        public bool IsDragOver {
+            get { return (bool)GetValue(IsDragOverProperty); }
+            set { SetValue(IsDragOverProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsDragOverProperty = DependencyProperty.Register(nameof(IsDragOver),typeof(bool),typeof(MainWindow),new PropertyMetadata(false));
         public MainWindow()
         {
             
@@ -19,35 +24,27 @@ namespace EditorApp
 
         private void HandleDragEnter(object sender, DragEventArgs dragEvent)
         {
-            if (dragEvent.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                string[] dragFiles = (string[])dragEvent.Data.GetData(DataFormats.FileDrop);
-                if (dragFiles.Length == 1 && System.IO.Path.GetExtension(dragFiles[0]).ToLower() == ".docx")
-                {
-                    this.Background = Brushes.White;
-                    dragEvent.Effects = DragDropEffects.Copy;
-                }
-                else
-                {
-                    dragEvent.Effects = DragDropEffects.None;
-                }
-                dragEvent.Handled = true;
-            }
+            SetDragState(dragEvent);
         }
+
+        private void HandleDragOver(object sender, DragEventArgs dragEvent)
+        {
+            SetDragState(dragEvent);
+        }
+
         private void HandleDragLeave(object sender, DragEventArgs dragEvent)
         {
-            if (dragEvent.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                var converter = new BrushConverter();
-                this.Background = (Brush)converter.ConvertFromString("#FFFFF0");
-                dragEvent.Handled = true;
-            }
+            IsDragOver = false;
+            dragEvent.Handled = true;
         }
         private async void HandleDrop(object sender, DragEventArgs dragEvent)
         {
+            IsDragOver = false;
+
             if (dragEvent.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])dragEvent.Data.GetData(DataFormats.FileDrop);
+
                 if (files.Length == 1 && System.IO.Path.GetExtension(files[0]).ToLower() == ".docx")
                 {
                     var viewModel = DataContext as ApplicationViewModel;
@@ -58,9 +55,37 @@ namespace EditorApp
                 }
                 else
                 {
-                    MessageBox.Show("Поддерживаются только файлы .docx", "Неподдерживаемый формат", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(
+                        "Поддерживаются только файлы .docx",
+                        "Неподдерживаемый формат",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
                 }
             }
+
+            dragEvent.Handled = true;
+        }
+        private void SetDragState(DragEventArgs dragEvent)
+        {
+            bool canAcceptDocx = false;
+
+            if (dragEvent.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] dragFiles = (string[])dragEvent.Data.GetData(DataFormats.FileDrop);
+
+                if (dragFiles.Length == 1)
+                {
+                    string extension = System.IO.Path.GetExtension(dragFiles[0]).ToLower();
+                    if (extension == ".docx")
+                    {
+                        canAcceptDocx = true;
+                    }
+                }
+            }
+
+            IsDragOver = canAcceptDocx;
+            dragEvent.Effects = canAcceptDocx ? DragDropEffects.Copy : DragDropEffects.None;
+            dragEvent.Handled = true;
         }
     }
 }

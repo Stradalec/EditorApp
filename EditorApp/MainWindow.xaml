@@ -16,10 +16,66 @@
       <ColumnDefinition Width="*"/>
     </Grid.ColumnDefinitions>
     <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
-      <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource StartButtonsGroup}"  Command= "{Binding OpenDocumentCommand}" >Открыть</Button>
-        <TextBlock Text="{Binding SelectedDocument.DocumentName, TargetNullValue='Перетащите .docx файл в окно'}" HorizontalAlignment="Center" VerticalAlignment="Center"
-       Foreground="Black" FontSize="24" FontWeight="SemiBold"/>
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+        <Button Template="{DynamicResource StartButtonsGroup}"
+          Command="{Binding OpenDocumentCommand}">
+          Открыть
+        </Button>
+
+        <Grid Margin="12,0,0,0"
+        VerticalAlignment="Center"
+        Width="700"
+        Height="70"
+        AllowDrop="True"
+        Drop="HandleDrop"
+        DragEnter="HandleDragEnter"
+        DragOver="HandleDragOver"
+        DragLeave="HandleDragLeave">
+
+          <Border x:Name="DropZoneBackground" CornerRadius="10">
+            <Border.Style>
+              <Style TargetType="Border">
+                <Setter Property="Background" Value="#10FFFFFF"/>
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsDragOver, RelativeSource={RelativeSource AncestorType=Window}}"
+                     Value="True">
+                    <Setter Property="Background" Value="#2200FF00"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
+          </Border>
+
+
+          <Rectangle RadiusX="10" RadiusY="10"
+               StrokeThickness="2"
+               Stroke="#AA000000"
+               StrokeDashArray="6 4"
+               Fill="Transparent"/>
+
+
+          <TextBlock HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               TextAlignment="Center"
+               FontSize="18"
+               FontWeight="SemiBold"
+               Foreground="Black">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Text"
+                  Value="{Binding SelectedDocument.DocumentName, TargetNullValue='Перетащите .docx файл сюда'}"/>
+
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsDragOver, RelativeSource={RelativeSource AncestorType=Window}}"
+                         Value="True">
+                    <Setter Property="Text" Value="Отпустите, чтобы открыть .docx"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+
+        </Grid>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource StartButtonsGroup}" Command= "{Binding RegisterCommand}">Выбрать шаблон</Button>

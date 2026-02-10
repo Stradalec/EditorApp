@@ -22,7 +22,7 @@ def main():
 
     invite_code = generate_invite_code()
     code_hash = sha256_hex(invite_code)
-
+    with open('invite_code.txt', 'w', encoding='utf-8') as file: file.write(f'Код приглашения: {invite_code}')
     db = SessionLocal()
     try:
         with db.begin():

@@ -87,6 +87,9 @@ def start_file_watcher():
 def generate_key():
     key = secrets.token_urlsafe(32)
     return key
+
+def sha256_hex(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
     
 def hash_key(key: str) -> str:
     salt = os.urandom(salt_length)
@@ -156,7 +159,7 @@ def register():
     if not invite_code or not user_name:
         return jsonify({"error": "Нужны invite_code и user_name", "request_id": g.request_id}), 400
 
-    invite_hash = invite_code
+    invite_hash = sha256_hex(invite_code)
     logger.warning(f"Захешил инвайт")
     db = SessionLocal()
     try:

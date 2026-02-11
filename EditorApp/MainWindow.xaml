@@ -18,7 +18,7 @@
     <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
       <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
         <Button Template="{DynamicResource StartButtonsGroup}"
-          Command="{Binding OpenDocumentCommand}">
+          Command="{Binding OpenDocumentCommand}" ToolTip="Открывает загруженный документ.">
           Открыть
         </Button>
 
@@ -51,7 +51,8 @@
                StrokeThickness="2"
                Stroke="#AA000000"
                StrokeDashArray="6 4"
-               Fill="Transparent"/>
+               Fill="Transparent"
+               ToolTip="Перетащите файл в это окно для того, чтобы программа могла с ним работать"/>
 
 
           <TextBlock HorizontalAlignment="Center"
@@ -78,7 +79,7 @@
         </Grid>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource StartButtonsGroup}" Command= "{Binding RegisterCommand}">Выбрать шаблон</Button>
+        <Button Template="{DynamicResource StartButtonsGroup}" Command= "{Binding RegisterCommand}"  ToolTip="Позволяет выбрать шаблон для обработки списка литературы (Не реализовано в этой версии)">Выбрать шаблон</Button>
         <TextBlock Text="Гост номер.docx" Style="{DynamicResource BlackTextBlock}"/>
       </StackPanel>
       <ListBox Style="{DynamicResource ListBox}">
@@ -91,13 +92,13 @@
         <ListBoxItem Style="{DynamicResource ListBoxItem}"  Padding="5">
           <StackPanel Orientation="Horizontal">
             <CheckBox Style="{DynamicResource CheckBox}" Width="24" IsChecked="{Binding SelectedOptions.IsReferencesAcitve, Mode=TwoWay}"/>
-            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Работа с отступами"/>
+            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Работа с гиперссылками"/>
           </StackPanel>
         </ListBoxItem>
       </ListBox>
       <DockPanel LastChildFill="False" HorizontalAlignment="Left">
-        <Button DockPanel.Dock="Left" Template="{DynamicResource ButtonTextBorderBold}"  Command="{Binding ProcessAndSaveDocumentCommand}">Запустить</Button>
-        <Button DockPanel.Dock="Right" Template="{DynamicResource TextButton1}" Command="{Binding CancelAnyProcessCommand}">Прервать операцию</Button> 
+        <Button DockPanel.Dock="Left" Template="{DynamicResource ButtonTextBorderBold}"  Command="{Binding ProcessAndSaveDocumentCommand}" ToolTip="Начать выбранные операции с документом">Запустить</Button>
+        <Button DockPanel.Dock="Right" Template="{DynamicResource TextButton1}" Command="{Binding CancelAnyProcessCommand}" ToolTip="Прервать процесс обработки документа без сохранения">Прервать операцию</Button> 
       </DockPanel>
       <StackPanel Margin="10">
         <ProgressBar 
@@ -114,7 +115,8 @@
         Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
         HorizontalAlignment="Center"
         FontSize="24"
-        FontStyle="Italic"/>
+        FontStyle="Italic"
+        ToolTip="Прогресс работы со списком литературы отображается в пунктах"/>
       </StackPanel>
     </StackPanel>
 

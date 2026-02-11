@@ -24,7 +24,7 @@
 
         <Grid Margin="12,0,0,0"
         VerticalAlignment="Center"
-        Width="700"
+        Width="650"
         Height="70"
         AllowDrop="True"
         Drop="HandleDrop"
@@ -77,6 +77,10 @@
           </TextBlock>
 
         </Grid>
+        <Button Template="{DynamicResource ImageButton}" 
+  Command="{Binding OpenHelpCommand}" ToolTip="Информация о программе" Background="Transparent" Margin="15,15,15,15" BorderThickness="0,0,0,0">
+          <Image Source="/icons/icon_help.png" Width="40" Height="40"/>
+        </Button>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
         <Button Template="{DynamicResource StartButtonsGroup}" Command= "{Binding RegisterCommand}"  ToolTip="Позволяет выбрать шаблон для обработки списка литературы (Не реализовано в этой версии)">Выбрать шаблон</Button>

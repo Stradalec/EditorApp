@@ -39,6 +39,7 @@
     <Compile Remove="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="icons\icon_help.png" />
     <None Remove="icons\icon_view.png" />
     <None Remove="icons\icon_view.svg" />
   </ItemGroup>
@@ -53,6 +54,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="icons\icon_help.png" />
     <Resource Include="icons\icon_view.png" />
     <Resource Include="icons\icon_view.svg" />
   </ItemGroup>

@@ -148,6 +148,11 @@ namespace EditorApp.source
         {
             _cancellationTokenSource.Cancel();
         }
+        [RelayCommand]
+        private void OpenHelp()
+        {
+            _dialogService.ShowMessage("Здесь будет текст справки", "Справка", MessageBoxButton.OK);
+        }
         public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService)
         {
             _documentService = documentService;

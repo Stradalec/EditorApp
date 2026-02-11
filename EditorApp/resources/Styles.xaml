@@ -38,6 +38,29 @@
     <Setter Property="Padding" Value="20,10"/>
     <Setter Property="Margin" Value="15"/>
   </Style>
+  <ControlTemplate x:Key="ImageButton" TargetType="{x:Type ButtonBase}">
+    <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="true">
+      <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+    </Border>
+    <ControlTemplate.Triggers>
+      <Trigger Property="Button.IsDefaulted" Value="true">
+        <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+      </Trigger>
+      <Trigger Property="IsMouseOver" Value="true">
+        <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
+        <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
+      </Trigger>
+      <Trigger Property="IsPressed" Value="true">
+        <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
+        <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border}"/>
+      </Trigger>
+      <Trigger Property="IsEnabled" Value="false">
+        <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
+        <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border}"/>
+        <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+      </Trigger>
+    </ControlTemplate.Triggers>
+  </ControlTemplate>
   <Style x:Key="BlackTextBlock" TargetType="{x:Type TextBlock}">
     <Setter Property="FontSize" Value="24"/>
     <Setter Property="TextWrapping" Value="NoWrap"/>
@@ -387,4 +410,5 @@
       </Trigger>
     </ControlTemplate.Triggers>
   </ControlTemplate>
+  
 </ResourceDictionary>

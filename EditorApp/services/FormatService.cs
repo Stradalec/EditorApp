@@ -144,8 +144,9 @@ namespace EditorApp.services
             return text.Trim();
         }
         public async Task<List<(string text, string url, bool isAlive)>> CheckLinksAsync(string filePath, IProgress<(int current, int total)>? progress, CancellationToken token)
-        {
-            var result = new List<(string, string, bool)>();
+        {           
+            var collected = new List<(string text, string url)>();
+            var result = new List<(string text, string url, bool isAlive)>();
             WordprocessingDocument document = WordprocessingDocument.Open(filePath, false);
             var mainDocumentPart = document.MainDocumentPart;
             if (mainDocumentPart?.Document?.Body == null)
@@ -166,8 +167,7 @@ namespace EditorApp.services
                 }
                 string url = relationship.Uri.ToString();
                 var text = string.Concat(link.Descendants<Text>().Select(linkText => linkText.Text));
-               
-                result.Add((text, url, await TryUrlAsync(url)));
+                collected.Add((text, url));
             }
             foreach (var fieldSimple in mainDocumentPart.Document.Body.Descendants<OpenXmlElement>().Where(element => element.LocalName == "fldSimple"))
             {
@@ -177,8 +177,7 @@ namespace EditorApp.services
 
                 var text = string.Concat(fieldSimple.Descendants<Text>().Select(text => text.Text));
                 if (string.IsNullOrWhiteSpace(text)) text = url;
-
-                result.Add((text, url, await TryUrlAsync(url)));
+                collected.Add((text, url));
             }
             string? currentInstr = null;
             bool inField = false;
@@ -199,9 +198,9 @@ namespace EditorApp.services
                         if (!string.IsNullOrWhiteSpace(currentInstr))
                         {
                             var url = ExtractUrlFromHyperlinkInstruction(currentInstr);
-                            if (url != null && !result.Any(result => result.Item2.Equals(url, StringComparison.OrdinalIgnoreCase)))
+                            if (url != null && !collected.Any(result => result.Item2.Equals(url, StringComparison.OrdinalIgnoreCase)))
                             {
-                                result.Add((url, url, await TryUrlAsync(url)));
+                                collected.Add((url, url));
                             }
                                 
                         }
@@ -218,6 +217,20 @@ namespace EditorApp.services
                     currentInstr += element.InnerText;
                 }
             }
+            result = new List<(string text, string url, bool isAlive)>(collected.Count);
+
+            int total = collected.Count;
+            for (int tryUrlIndex = 0; tryUrlIndex < total; ++tryUrlIndex)
+            {
+                token.ThrowIfCancellationRequested();
+
+                var (text, url) = collected[tryUrlIndex];
+                bool ok = await TryUrlAsync(url, token);
+
+                result.Add((text, url, ok));
+
+                progress?.Report((tryUrlIndex + 1, total));
+            }
             document.Dispose();
             return result;
         }
@@ -230,8 +243,9 @@ namespace EditorApp.services
             var match = Regex.Match(instr, @"HYPERLINK\s+""(?<url>[^""]+)""", RegexOptions.IgnoreCase);
             return match.Success ? match.Groups["url"].Value : null;
         }
-        public async Task<bool> TryUrlAsync(string url)
+        public async Task<bool> TryUrlAsync(string url, CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
             try
             {
                 using var requestHead = new HttpRequestMessage(HttpMethod.Head, url);
@@ -243,6 +257,10 @@ namespace EditorApp.services
                     return responseGet.IsSuccessStatusCode;
                 }
                 return response.IsSuccessStatusCode;
+            }
+            catch (OperationCanceledException)
+            {
+                throw; 
             }
             catch
             {

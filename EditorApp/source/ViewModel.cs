@@ -169,7 +169,7 @@ namespace EditorApp.source
         [RelayCommand]
         private void OpenHelp()
         {
-            _dialogService.ShowMessage("Здесь будет текст справки", "Справка", MessageBoxButton.OK);
+            _dialogService.ShowMessage("В модель идёт обрабатываться весь текст после слов \"список литературы\". Записи отправляются по принципу \"новый абзац\" - \"новая запись\". \r\n В среднем обработка списка литературы занимает 3-7 минут (при списке приблизительно в 20 элементов). Для отслеживания есть шкала прогресса. \r\n Прогресс работы со списком литературы отображается в пунктах этого списка, для ссылок - в количестве обработанных ссылок ", "Справка", MessageBoxButton.OK);
         }
         public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService)
         {

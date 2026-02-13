@@ -98,55 +98,68 @@ namespace EditorApp.source
                 _dialogService.ShowMessage("Файл не выбран.", "Ошибка", MessageBoxButton.OK);
                 return;
             }
-            if (SelectedOptions.IsFormatActive)
+            try
             {
-                try
+                IsProcessing = true;
+                ProgressMaximum = 100;
+                ProgressValue = 0;
+                
+
+                var progressSteps = new List<(string name, int weight)>();
+                if (SelectedOptions.IsFormatActive)
                 {
-                    IsProcessing = true;
-                    ProgressMaximum = 100;
-                    ProgressValue = 0;
-                    ProgressText = "Извлечение списка литературы...";
-
-                    ProgressValue = 10;
-                    ProgressText = "Отправка на форматирование...";
-                    var progress = new Progress<(int current, int total)>(p =>
-                    {
-                        ProgressValue = p.current;
-                        ProgressMaximum = p.total;
-                        ProgressText = $"Форматирование: {p.current}/{p.total}";
-                    });
-                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, progress, _cancellationTokenSource.Token);
-
-                    ProgressValue = 60;
-                    ProgressText = "Сохранение файла...";
-
+                    progressSteps.Add(("Форматирование", 70));
+                }
+                if (SelectedOptions.IsReferencesActive)
+                {
+                    progressSteps.Add(("Проверка ссылок", 30));
+                }
+                var progressService = new ProgressService((value, text) => { 
+                    ProgressValue = value; 
+                    ProgressText = text; 
+                }, progressSteps);
+                int stepIndex = 0;
+                if (SelectedOptions.IsFormatActive)
+                {
+                    progressService.SetText("Извлечение списка литературы...");
+                    var stepProgress = progressService.CreateStepProgress(stepIndex);
+                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, stepProgress, _cancellationTokenSource.Token);
+                    progressService.SetText("Сохранение файла...");
                     await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
+                    progressService.CompleteStep(stepIndex);
+                    ++stepIndex;
+                }
+                List<(string text, string url, bool isAlive)> linkResult = new();
+                if (SelectedOptions.IsReferencesActive)
+                {
+                    progressService.SetText("Проверка ссылок");
+                    var linkProgress = progressService.CreateStepProgress(stepIndex);
 
-                    ProgressValue = 100;
-                    ProgressText = "Готово!";
 
+                    linkResult = await _formatService.CheckLinksAsync(SelectedDocument.FilePath,linkProgress,_cancellationTokenSource.Token);
+
+                    progressService.CompleteStep(stepIndex);
+                    ++stepIndex;
+                    var lines = linkResult.Select(result => $"{(result.isAlive ? "ХОР" : "ПЛХ")} | {result.url} | {result.text}");
+                    _dialogService.ShowMessage(string.Join(Environment.NewLine, lines), "Оповещение", MessageBoxButton.OK);
                 }
-                catch (OperationCanceledException ex)
-                {
-                    _dialogService.ShowMessage($" Операция отменена пользователем", "Оповещение", MessageBoxButton.OK);
-                }
-                catch (Exception ex)
-                {
-                    _dialogService.ShowMessage($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK);
-                }
-                finally
-                {
-                    IsProcessing = false;
-                    ProgressValue = 0;
-                    ProgressText = "";
-                }
+                progressService.Finish();
             }
-            if (SelectedOptions.IsReferencesActive)
+            catch (OperationCanceledException)
             {
-                var result = await _formatService.CheckLinksAsync(SelectedDocument.FilePath);
-                var lines = result.Select(reference => $"{(reference.isAlive ? "ХОР" : "ПЛХ")} | {reference.url} | {reference.text}");
-                _dialogService.ShowMessage(string.Join(Environment.NewLine, lines), "Оповещение", MessageBoxButton.OK);
+                _dialogService.ShowMessage("Операция отменена пользователем", "Оповещение", MessageBoxButton.OK);
             }
+            catch (Exception ex)
+            {
+                _dialogService.ShowMessage($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK);
+            }
+            finally
+            {
+                IsProcessing = false;
+                ProgressValue = 0;
+                ProgressText = "";
+            }
+            
         }
         [RelayCommand]
         private  void CancelAnyProcess()

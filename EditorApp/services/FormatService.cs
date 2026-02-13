@@ -143,7 +143,7 @@ namespace EditorApp.services
 
             return text.Trim();
         }
-        public async Task<List<(string text, string url, bool isAlive)>> CheckLinksAsync(string filePath)
+        public async Task<List<(string text, string url, bool isAlive)>> CheckLinksAsync(string filePath, IProgress<(int current, int total)>? progress, CancellationToken token)
         {
             var result = new List<(string, string, bool)>();
             WordprocessingDocument document = WordprocessingDocument.Open(filePath, false);

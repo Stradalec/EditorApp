@@ -95,7 +95,7 @@
         </ListBoxItem>
         <ListBoxItem Style="{DynamicResource ListBoxItem}"  Padding="5">
           <StackPanel Orientation="Horizontal">
-            <CheckBox Style="{DynamicResource CheckBox}" Width="24" IsChecked="{Binding SelectedOptions.IsReferencesAcitve, Mode=TwoWay}"/>
+            <CheckBox Style="{DynamicResource CheckBox}" Width="24" IsChecked="{Binding SelectedOptions.IsReferencesActive, Mode=TwoWay}"/>
             <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Работа с гиперссылками"/>
           </StackPanel>
         </ListBoxItem>

@@ -141,7 +141,12 @@ namespace EditorApp.source
                     ProgressText = "";
                 }
             }
-            
+            if (SelectedOptions.IsReferencesActive)
+            {
+                var result = await _formatService.CheckLinksAsync(SelectedDocument.FilePath);
+                var lines = result.Select(reference => $"{(reference.isAlive ? "ХОР" : "ПЛХ")} | {reference.url} | {reference.text}");
+                _dialogService.ShowMessage(string.Join(Environment.NewLine, lines), "Оповещение", MessageBoxButton.OK);
+            }
         }
         [RelayCommand]
         private  void CancelAnyProcess()

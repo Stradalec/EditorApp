@@ -1,6 +1,9 @@
-﻿using DocumentFormat.OpenXml.ExtendedProperties;
-using DocumentFormat.OpenXml.Spreadsheet;
+﻿using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.ExtendedProperties;
+using DocumentFormat.OpenXml.Packaging;
+
 using DocumentFormat.OpenXml.Vml;
+using DocumentFormat.OpenXml.Wordprocessing;
 using EditorApp.source;
 using System;
 using System.Collections.Generic;
@@ -29,7 +32,7 @@ namespace EditorApp.services
             {
                 return "Исходный текст пуст.";
             }
-                
+
             var items = SplitIntoBibliographyItems(rawText);
             if (!items.Any())
             {
@@ -63,7 +66,7 @@ namespace EditorApp.services
             {
                 return new List<string>();
             }
-            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var lines = text.Split(new[] { "\result\n", "\result", "\n" }, StringSplitOptions.None);
 
             var items = new List<string>();
             foreach (var line in lines)
@@ -92,7 +95,7 @@ namespace EditorApp.services
                 return item;
             }
 
-            string reason = ""; 
+            string reason = "";
             try
             {
                 var request = new ListRequest { text = item };
@@ -104,14 +107,14 @@ namespace EditorApp.services
 
                     if (!string.IsNullOrWhiteSpace(formatted))
                     {
-                        formatted = RemoveExtraSpaces(formatted); 
+                        formatted = RemoveExtraSpaces(formatted);
                         return formatted;
                     }
                 }
 
                 var error = await response.Content.ReadAsStringAsync();
                 throw new HttpRequestException($"Ошибка при обработке пункта: {response.StatusCode}\n{error}");
-            }           
+            }
             catch (HttpRequestException ex)
             {
                 reason = $" Сетевая ошибка: {ex.Message}";
@@ -139,7 +142,113 @@ namespace EditorApp.services
             text = Regex.Replace(text, @"\s{2,}", " ");
 
             return text.Trim();
-        }        
+        }
+        public async Task<List<(string text, string url, bool isAlive)>> CheckLinksAsync(string filePath)
+        {
+            var result = new List<(string, string, bool)>();
+            WordprocessingDocument document = WordprocessingDocument.Open(filePath, false);
+            var mainDocumentPart = document.MainDocumentPart;
+            if (mainDocumentPart?.Document?.Body == null)
+            {
+                return result;
+            }
+            var links = mainDocumentPart.Document.Body.Descendants<Hyperlink>();
+            foreach (var link in links) 
+            {
+                if (link.Id == null)
+                {
+                    continue;
+                }
+                var relationship = mainDocumentPart.HyperlinkRelationships.FirstOrDefault(relation => relation.Id == link.Id);
+                if (relationship == null)
+                {
+                    continue;
+                }
+                string url = relationship.Uri.ToString();
+                var text = string.Concat(link.Descendants<Text>().Select(linkText => linkText.Text));
+               
+                result.Add((text, url, await TryUrlAsync(url)));
+            }
+            foreach (var fieldSimple in mainDocumentPart.Document.Body.Descendants<OpenXmlElement>().Where(element => element.LocalName == "fldSimple"))
+            {
+                var instruct = fieldSimple.GetAttributes().FirstOrDefault(attribute => attribute.LocalName == "instr").Value;
+                var url = ExtractUrlFromHyperlinkInstruction(instruct);
+                if (url == null) continue;
+
+                var text = string.Concat(fieldSimple.Descendants<Text>().Select(text => text.Text));
+                if (string.IsNullOrWhiteSpace(text)) text = url;
+
+                result.Add((text, url, await TryUrlAsync(url)));
+            }
+            string? currentInstr = null;
+            bool inField = false;
+
+            foreach (var element in mainDocumentPart.Document.Body.Descendants<OpenXmlElement>())
+            {
+                if (element.LocalName == "fldChar")
+                {
+                    var fldType = element.GetAttributes().FirstOrDefault(attribute => attribute.LocalName == "fldCharType").Value;
+
+                    if (string.Equals(fldType, "begin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        inField = true;
+                        currentInstr = "";
+                    }
+                    else if (string.Equals(fldType, "end", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!string.IsNullOrWhiteSpace(currentInstr))
+                        {
+                            var url = ExtractUrlFromHyperlinkInstruction(currentInstr);
+                            if (url != null && !result.Any(result => result.Item2.Equals(url, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                result.Add((url, url, await TryUrlAsync(url)));
+                            }
+                                
+                        }
+
+                        inField = false;
+                        currentInstr = null;
+                    }
+
+                    continue;
+                }
+
+                if (inField && element.LocalName == "instrText")
+                {
+                    currentInstr += element.InnerText;
+                }
+            }
+            document.Dispose();
+            return result;
+        }
+        private static string? ExtractUrlFromHyperlinkInstruction(string? instr)
+        {
+            if (string.IsNullOrWhiteSpace(instr)) 
+            {
+                return null;
+            } 
+            var match = Regex.Match(instr, @"HYPERLINK\s+""(?<url>[^""]+)""", RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups["url"].Value : null;
+        }
+        public async Task<bool> TryUrlAsync(string url)
+        {
+            try
+            {
+                using var requestHead = new HttpRequestMessage(HttpMethod.Head, url);
+                using var response = await _httpClient.SendAsync(requestHead);
+                if ((int)response.StatusCode == 405 || (int)response.StatusCode == 403)
+                {
+                    using var requestGet = new HttpRequestMessage(HttpMethod.Get, url);
+                    using var responseGet = await _httpClient.SendAsync(requestGet);
+                    return responseGet.IsSuccessStatusCode;
+                }
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
 

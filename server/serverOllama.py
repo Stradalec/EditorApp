@@ -15,12 +15,16 @@ import secrets
 from datetime import datetime, timezone
 import base64
 import hmac
+import time
+from threading import Semaphore
 import json
+
+llm_gate = Semaphore(1)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
-with open('config.ini', 'r', encoding='utf-8') as config_file:
+with open('configOllama.ini', 'r', encoding='utf-8') as config_file:
     config.read_file(config_file)
 DATABASE_URL = config['server']['database_api']
 engine = create_engine(DATABASE_URL)
@@ -247,27 +251,49 @@ def format_text():
             return jsonify({"error": "Запрос не должен быть пуст"}), 400
         if len(text) > MAX_INPUT_LENGTH:
             return jsonify({"error": f"Слишком большой объем текста. Максимальная длина: {MAX_INPUT_LENGTH} знаков."}), 413
-        payload = {
-            "model": "qwen3-vl-8b-instruct", 
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": text}
-            ],
-            "temperature": 0.1,
-            "max_tokens": 512,
-            "stop": ["<|im_end|>", "<tool_call>"],
-            "stream": False
-        }
-        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        headers = {"Content-Type": "application/json"}
-        session = requests.Session()
-        session.trust_env = False
-        response = session.post(MODEL_API, data=body, headers=headers, timeout=(5, 240))
-        response.raise_for_status()
-        result = response.json()
+        if not llm_gate.acquire(timeout=1):
+            return jsonify({"error": "Модель занята, попробуйте ещё раз", "request_id": g.request_id}), 429
 
-        content = result["choices"][0]["message"]["content"].strip()
-        return jsonify({"result": content})
+        try:
+            logger.error(f"MODEL_API={MODEL_API} model=qwen3:8b prompt_len={len(system_prompt)} text_len={len(text)}")
+            payload = {
+                "model": "qwen3-editor",
+                "think": False,
+                "messages": [{"role":"user","content": text}],
+                "stream": False
+            }
+
+
+
+
+
+            t0 = time.time()
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            headers = {"Content-Type": "application/json"}
+
+            logger.error(f"OUTGOING bytes={len(body)} first200={body[:200]!r}")
+            session = requests.Session()
+            session.trust_env = False
+            response = session.post(MODEL_API, data=body, headers=headers, timeout=(5, 240))
+            logger.error(f"RESP status={response.status_code} headers={dict(response.headers)}")
+            dt = time.time() - t0
+
+            if response.status_code >= 400:
+                logger.error(f"Ollama status={response.status_code} in {dt:.2f}s body_len={len(response.content)} body={response.text!r}")
+                response.raise_for_status()
+
+            result = response.json()
+            message = result.get("message") or {}
+            content = (message.get("content") or "").strip()
+            if not content:
+                content = (message.get("thinking") or "").strip()
+            if not content:
+                return jsonify({"error": "Модель вернула пустой ответ", "request_id": g.request_id}), 502
+            return jsonify({"result": content})
+
+
+        finally:
+            llm_gate.release()
     except requests.exceptions.Timeout:
         logger.error("Таймаут при обращении к LLM")
         return jsonify({"error": "Таймаут при обращении к LLM"}), 504
@@ -292,7 +318,7 @@ if __name__ == "__main__":
         
         logger.info("Сервер запускается...")
         
-        app.run(host="0.0.0.0", port=44752, debug=False, threaded=True)
+        app.run(host="0.0.0.0", port=44752, debug=False, threaded=False)
         
     except KeyboardInterrupt:
         logger.info("Остановка наблюдателя...")

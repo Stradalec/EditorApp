@@ -9,6 +9,8 @@ namespace EditorApp.source
     public class ListRequest
     {
         public string text { get; set; } = "";
+        public string language { get; set; } = "";
+        public string templateId { get; set; } = "";
     }
 
     public class ListResponse

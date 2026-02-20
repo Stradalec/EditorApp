@@ -56,7 +56,7 @@ namespace EditorApp
             
             var documentService = new DocumentService();
             
-            var createdViewModel = new ApplicationViewModel(documentService, dialogService, formatService);
+            var createdViewModel = new ApplicationViewModel(documentService, dialogService, formatService, httpClient);
             ;
             mainWindow.DataContext = createdViewModel;
             mainWindow.Show();

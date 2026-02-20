@@ -27,6 +27,7 @@ namespace EditorApp.source
         private readonly IDocumentService _documentService;
         private readonly IDialogService _dialogService;
         private readonly IFormatService _formatService;
+        private readonly HttpClient _httpClient;
         [ObservableProperty]
         private Document selectedDocument;
         [ObservableProperty]
@@ -35,7 +36,14 @@ namespace EditorApp.source
         private bool _isProcessing;
         [ObservableProperty]
         private FormatOptions _selectedOptions = new FormatOptions();
+        public ObservableCollection<TemplateItem> Templates { get; } = new ObservableCollection<TemplateItem>
+        {
+            new TemplateItem { Id = "default", Title = "ГОСТ Р 7.0.100-2018" },
+            new TemplateItem { Id = "test", Title = "Сказать привет Прикладной Информатике" }
+        };
 
+        [ObservableProperty]
+        private TemplateItem? selectedTemplate;
         [ObservableProperty]
         private string _progressText = "";
         private CancellationTokenSource _cancellationTokenSource;
@@ -44,6 +52,26 @@ namespace EditorApp.source
 
         [ObservableProperty]
         private int _progressMaximum = 100;
+
+        partial void OnSelectedTemplateChanged(TemplateItem? value)
+        {
+            if (value?.Id is null) return;
+            _ = SetTemplateOnServerAsync(value.Id);
+        }
+
+        private async Task SetTemplateOnServerAsync(string templateId)
+        {
+            try
+            {
+                var resp = await _httpClient.PostAsJsonAsync("set_template", new { templateId });
+                var body = await resp.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"set_template exception: {ex}");
+            }
+        }
+
         [RelayCommand]
         private async Task LoadDocument(string filePath = null)
         {
@@ -123,7 +151,7 @@ namespace EditorApp.source
                 {
                     progressService.SetText("Извлечение списка литературы...");
                     var stepProgress = progressService.CreateStepProgress(stepIndex);
-                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, stepProgress, _cancellationTokenSource.Token);
+                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, SelectedTemplate, stepProgress, _cancellationTokenSource.Token);
                     progressService.SetText("Сохранение файла...");
                     await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
                     progressService.CompleteStep(stepIndex);
@@ -171,12 +199,13 @@ namespace EditorApp.source
         {
             _dialogService.ShowMessage("В модель идёт обрабатываться весь текст после слов \"список литературы\". Записи отправляются по принципу \"новый абзац\" - \"новая запись\". \r\n В среднем обработка списка литературы занимает 3-7 минут (при списке приблизительно в 20 элементов). Для отслеживания есть шкала прогресса. \r\n Прогресс работы со списком литературы отображается в пунктах этого списка, для ссылок - в количестве обработанных ссылок ", "Справка", MessageBoxButton.OK);
         }
-        public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService)
+        public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService, HttpClient httpClient)
         {
             _documentService = documentService;
             _dialogService = dialogService;
             _formatService = formatService;
             SelectedDocument = new Document();
+            _httpClient = httpClient;
         }
 
     }

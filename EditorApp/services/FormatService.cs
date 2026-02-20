@@ -26,7 +26,7 @@ namespace EditorApp.services
             _httpClient = httpClient;
         }
 
-        public async Task<string> FormatBibliographyAsync(string rawText, IProgress<(int current, int total)> progress, CancellationToken cancellationToken)
+        public async Task<string> FormatBibliographyAsync(string rawText, TemplateItem selectedTemplatedId, IProgress<(int current, int total)> progress, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(rawText))
             {
@@ -45,7 +45,7 @@ namespace EditorApp.services
                 cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
-                    var formatted = await FormatSingleItemAsync(items[formatIndex], cancellationToken);
+                    var formatted = await FormatSingleItemAsync(items[formatIndex], selectedTemplatedId, cancellationToken);
                     if (formatted.EndsWith("[Элемент: sectPr]", StringComparison.OrdinalIgnoreCase))
                     {
                         formatted = formatted.Substring(0, formatted.Length - "[Элемент: sectPr]".Length);
@@ -88,7 +88,7 @@ namespace EditorApp.services
             return items;
         }
 
-        private async Task<string> FormatSingleItemAsync(string item, CancellationToken cancellationToken)
+        private async Task<string> FormatSingleItemAsync(string item, TemplateItem selectedTemplate,  CancellationToken cancellationToken)
         {
             if (Regex.IsMatch(item.Trim(), @"^\d{1,3}[\.\)\-\–\—]\s*$"))
             {
@@ -98,7 +98,11 @@ namespace EditorApp.services
             string reason = "";
             try
             {
-                var request = new ListRequest { text = item };
+                var request = new ListRequest {
+                    text = item,
+                    language = DetectLanguage(item),
+                    templateId = selectedTemplate?.Id ?? "default"
+                };
                 var response = await _httpClient.PostAsJsonAsync("format", request, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
@@ -266,6 +270,14 @@ namespace EditorApp.services
             {
                 return false;
             }
+        }
+        private static string DetectLanguage(string inputString)
+        {
+            if (string.IsNullOrWhiteSpace(inputString)) 
+            {
+                return "RU";
+            } 
+            return Regex.IsMatch(inputString, @"[\u0400-\u04FF]") ? "RU" : "EN";
         }
     }
 }

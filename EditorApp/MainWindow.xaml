@@ -83,8 +83,13 @@
         </Button>
       </StackPanel>
       <StackPanel Orientation="Horizontal">
-        <Button Template="{DynamicResource StartButtonsGroup}" Command= "{Binding RegisterCommand}"  ToolTip="Позволяет выбрать шаблон для обработки списка литературы (Не реализовано в этой версии)">Выбрать шаблон</Button>
-        <TextBlock Text="Гост номер.docx" Style="{DynamicResource BlackTextBlock}"/>
+        <ComboBox Width="900" Height="40"
+          FontSize = "24"
+          VerticalAlignment="Center"
+          ItemsSource="{Binding Templates}"
+          SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
+          DisplayMemberPath="Title"
+          ToolTip="Выберите шаблон форматирования"/>
       </StackPanel>
       <ListBox Style="{DynamicResource ListBox}">
         <ListBoxItem Style="{DynamicResource ListBoxItem}" Padding="5">

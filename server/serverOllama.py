@@ -18,7 +18,11 @@ import hmac
 import time
 from threading import Semaphore
 import json
-
+prompts_list = {
+    "default": open("system_prompt.txt", "r", encoding="utf-8").read(),
+    "test": open("test.txt", "r", encoding="utf-8").read(),
+}
+default_template = "default"
 llm_gate = Semaphore(1)
 
 logging.basicConfig(level=logging.INFO)
@@ -140,12 +144,15 @@ def require_api_key(f):
                 SELECT key_hash
                 FROM api_keys
             """)).scalars().all()
-
-            ok = any(verify_key(api_key_plain, stored) for stored in rows)
-            if not ok:
+            matched = None
+            for stored in rows:
+                if verify_key(api_key_plain, stored):
+                    matched = stored
+                    break
+            if not matched:
                 logger.warning(f"[{g.request_id}] неверный API ключ. IP: {request.remote_addr}")
                 return jsonify({"error": "Неверный или отсутствующий API ключ", "request_id": g.request_id}), 401
-
+            g.api_key_hash = matched
             return f(*args, **kwargs)
         except Exception:
             logger.exception(f"[{g.request_id}] ошибка проверки API ключа")
@@ -232,6 +239,25 @@ def register():
     finally:
         db.close()
 
+@app.route("/templates", methods=["GET"])
+@require_api_key
+def list_templates():
+    items = [{"id": k, "title": k} for k in prompts_list.keys()]
+    return jsonify({"templates": items})
+active_template_key = {}  
+
+@app.route("/set_template", methods=["POST"])
+@require_api_key
+def set_template():
+    data = request.get_json(silent=True) or {}
+    template_id = (data.get("templateId") or "").strip()
+    if template_id not in prompts_list:
+        return jsonify({"error": "Unknown templateId"}), 400
+
+    
+    api_key_id = getattr(g, "api_key_hash", None) 
+    active_template_key[api_key_id] = template_id
+    return jsonify({"ok": True, "templateId": template_id})
 
 
 @app.route("/format", methods=["POST"])
@@ -244,6 +270,9 @@ def format_text():
             logger.warning(f"Не удалось получить данные из запроса")
             return jsonify({"error": "Некорректное тело запроса"}), 400
         text = data.get("text", "")
+        language = (data.get("language") or "").strip().upper()
+        if language not in ("RU", "EN"):
+            language = "RU"
         if not isinstance(text, str):
             return jsonify({"error": "Не удалось получить данные из запроса: данные должны иметь вид текста"}), 400
         text = text.strip()
@@ -253,13 +282,16 @@ def format_text():
             return jsonify({"error": f"Слишком большой объем текста. Максимальная длина: {MAX_INPUT_LENGTH} знаков."}), 413
         if not llm_gate.acquire(timeout=1):
             return jsonify({"error": "Модель занята, попробуйте ещё раз", "request_id": g.request_id}), 429
-
+        wrapped_text = f"LANG={language}\n{text}"
+        api_key_id = getattr(g, "api_key_hash", None)
+        template_id = active_template_key.get(api_key_id, default_template)
+        logger.warning(f"[{g.request_id}] format key_id={'set' if api_key_id else 'NONE'} using_template={template_id}")
+        system_prompt_used = prompts_list[template_id]
         try:
-            logger.error(f"MODEL_API={MODEL_API} model=qwen3:8b prompt_len={len(system_prompt)} text_len={len(text)}")
             payload = {
-                "model": "qwen3-editor",
+                "model": "qwen2.5noprompt",
                 "think": False,
-                "messages": [{"role":"user","content": text}],
+                "messages": [ {'role': 'system', 'content': system_prompt_used}, {"role":"user","content": wrapped_text}],
                 "stream": False
             }
 

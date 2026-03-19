@@ -9,6 +9,7 @@ namespace EditorApp.services
     public interface IDocumentService
     {
         Task<string> ExtractBibliographyAsync(string filePath);
-        Task SaveAsProcessedAsync(string originalPath, string bibliographyText, string suffix = "_Обработано");
+        Task<string> SaveAsProcessedAsync(string originalPath, string bibliographyText, string flag, string suffix = "_Обработано");
+        Task  OpenAsProcessed(string originalPath);
     }
 }

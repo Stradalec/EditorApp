@@ -131,8 +131,8 @@ namespace EditorApp.source
                 IsProcessing = true;
                 ProgressMaximum = 100;
                 ProgressValue = 0;
-                
 
+                string newDocumentPath = "original";
                 var progressSteps = new List<(string name, int weight)>();
                 if (SelectedOptions.IsFormatActive)
                 {
@@ -153,7 +153,7 @@ namespace EditorApp.source
                     var stepProgress = progressService.CreateStepProgress(stepIndex);
                     FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, SelectedTemplate, stepProgress, _cancellationTokenSource.Token);
                     progressService.SetText("Сохранение файла...");
-                    await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography);
+                    newDocumentPath = await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography, "list");
                     progressService.CompleteStep(stepIndex);
                     ++stepIndex;
                 }
@@ -163,14 +163,22 @@ namespace EditorApp.source
                     progressService.SetText("Проверка ссылок");
                     var linkProgress = progressService.CreateStepProgress(stepIndex);
 
-
-                    linkResult = await _formatService.CheckLinksAsync(SelectedDocument.FilePath,linkProgress,_cancellationTokenSource.Token);
-
+                    if (newDocumentPath != "original")
+                    {
+                        linkResult = await _formatService.CheckLinksAsync(newDocumentPath, linkProgress, _cancellationTokenSource.Token);
+                    }
+                    else
+                    {
+                        linkResult = await _formatService.CheckLinksAsync(SelectedDocument.FilePath, linkProgress, _cancellationTokenSource.Token);
+                    }
+                        
+                    await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography, "links");
                     progressService.CompleteStep(stepIndex);
                     ++stepIndex;
                     int badCount = linkResult.Count(result => !result.isAlive);
                     _dialogService.ShowMessage($"Проверка завершена. Нерабочих ссылок: {badCount}. Они выделены красным в документе.", "Оповещение", MessageBoxButton.OK);
                 }
+                await _documentService.OpenAsProcessed(newDocumentPath);
                 progressService.Finish();
             }
             catch (OperationCanceledException)

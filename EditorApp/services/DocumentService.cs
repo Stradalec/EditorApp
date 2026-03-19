@@ -99,7 +99,7 @@ namespace EditorApp.services
             });
         }
 
-        public async Task SaveAsProcessedAsync(string originalPath, string bibliographyText, string suffix = "_Обработано")
+        public async Task<string> SaveAsProcessedAsync(string originalPath, string bibliographyText, string flag, string suffix = "_Обработано")
         {
             if (!File.Exists(originalPath)) 
             {
@@ -111,16 +111,30 @@ namespace EditorApp.services
             string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalPath);
             string extension = Path.GetExtension(originalPath);
             string timestamp = DateTime.Now.ToString("HHmmss");
-            string outputPath = Path.Combine(directory, $"{fileNameWithoutExt}{suffix}_{timestamp}{extension}");
+            string outputPath = originalPath;
+            if (!originalPath.Contains("_Обработано"))
+            {
+                outputPath = Path.Combine(directory, $"{fileNameWithoutExt}{suffix}_{timestamp}{extension}");
+            }
+
+
 
 
             await Task.Run(() => File.Copy(originalPath, outputPath, overwrite: true));
 
-            await Task.Run(() => AppendBibliographyToDocument(outputPath, bibliographyText));
+            if (flag == "list")
+            {
+                await Task.Run(() => AppendBibliographyToDocument(outputPath, bibliographyText));
+            }
+                
 
-            OpenWithDefaultApp(outputPath);
+            return outputPath;
         }
-
+        public Task OpenAsProcessed(string originalPath)
+        {
+            OpenWithDefaultApp(originalPath);
+            return Task.CompletedTask;
+        }
         private void AppendBibliographyToDocument(string docxPath, string bibliographyText)
         {
             using var document = WordprocessingDocument.Open(docxPath, true); 
@@ -339,5 +353,7 @@ namespace EditorApp.services
             newParagraph.AppendChild(run);
             return newParagraph;
         }
+
+        
     }
 }

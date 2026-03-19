@@ -53,6 +53,9 @@ namespace EditorApp.source
         [ObservableProperty]
         private int _progressMaximum = 100;
 
+        [ObservableProperty]
+        private string estimatedTimeText = "";
+
         partial void OnSelectedTemplateChanged(TemplateItem? value)
         {
             if (value?.Id is null) return;
@@ -129,8 +132,11 @@ namespace EditorApp.source
             try
             {
                 IsProcessing = true;
+                var startTime = DateTime.Now;
+                EstimatedTimeText = "Осталось: оценка недоступна";
                 ProgressMaximum = 100;
                 ProgressValue = 0;
+
 
                 string newDocumentPath = "original";
                 var progressSteps = new List<(string name, int weight)>();
@@ -142,9 +148,21 @@ namespace EditorApp.source
                 {
                     progressSteps.Add(("Проверка ссылок", 30));
                 }
-                var progressService = new ProgressService((value, text) => { 
-                    ProgressValue = value; 
-                    ProgressText = text; 
+                var progressService = new ProgressService((value, text) => {
+                    ProgressValue = value;
+                    ProgressText = text;
+
+                    if (value > 0)
+                    {
+                        var elapsed = DateTime.Now - startTime;
+                        var totalEstimatedSeconds = elapsed.TotalSeconds * ProgressMaximum / value;
+                        var remainingSeconds = Math.Max(0, totalEstimatedSeconds - elapsed.TotalSeconds);
+                        EstimatedTimeText = $"Осталось: ~ {TimeSpan.FromSeconds(remainingSeconds):mm\\:ss}";
+                    }
+                    else
+                    {
+                        EstimatedTimeText = "Осталось: оценка недоступна";
+                    }
                 }, progressSteps);
                 int stepIndex = 0;
                 if (SelectedOptions.IsFormatActive)
@@ -193,6 +211,7 @@ namespace EditorApp.source
                 IsProcessing = false;
                 ProgressValue = 0;
                 ProgressText = "";
+                EstimatedTimeText = "";
             }
             
         }

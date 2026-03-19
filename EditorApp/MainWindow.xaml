@@ -126,6 +126,13 @@
         FontSize="24"
         FontStyle="Italic"
         ToolTip="Прогресс работы со списком литературы отображается в пунктах"/>
+        <TextBlock
+          Text="{Binding EstimatedTimeText}"
+          Style="{DynamicResource BlackTextBlock}"
+          Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+          HorizontalAlignment="Center"
+          FontSize="18"
+          Margin="0,0,0,6"/>
       </StackPanel>
     </StackPanel>
 

@@ -292,11 +292,13 @@ namespace EditorApp.services
 
         private static string DetectLanguage(string inputString)
         {
-            if (string.IsNullOrWhiteSpace(inputString)) 
-            {
+            if (string.IsNullOrWhiteSpace(inputString))
                 return "RU";
-            } 
-            return Regex.IsMatch(inputString, @"[\u0400-\u04FF]") ? "RU" : "EN";
+
+            int ruCount = Regex.Matches(inputString, @"[\u0400-\u04FF]").Count;
+            int enCount = Regex.Matches(inputString, @"[A-Za-z]").Count;
+
+            return ruCount > enCount ? "RU" : "EN";
         }
     }
 }

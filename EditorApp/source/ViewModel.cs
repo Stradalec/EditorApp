@@ -163,22 +163,21 @@ namespace EditorApp.source
                     progressService.SetText("Проверка ссылок");
                     var linkProgress = progressService.CreateStepProgress(stepIndex);
 
-                    if (newDocumentPath != "original")
+                    if (newDocumentPath == "original")
                     {
-                        linkResult = await _formatService.CheckLinksAsync(newDocumentPath, linkProgress, _cancellationTokenSource.Token);
+                        newDocumentPath = await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography, "links");
                     }
-                    else
-                    {
-                        linkResult = await _formatService.CheckLinksAsync(SelectedDocument.FilePath, linkProgress, _cancellationTokenSource.Token);
-                    }
-                        
-                    await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography, "links");
+
+                    linkResult = await _formatService.CheckLinksAsync(newDocumentPath, linkProgress, _cancellationTokenSource.Token);
+
                     progressService.CompleteStep(stepIndex);
                     ++stepIndex;
+
                     int badCount = linkResult.Count(result => !result.isAlive);
                     _dialogService.ShowMessage($"Проверка завершена. Нерабочих ссылок: {badCount}. Они выделены красным в документе.", "Оповещение", MessageBoxButton.OK);
                 }
                 await _documentService.OpenAsProcessed(newDocumentPath);
+                    
                 progressService.Finish();
             }
             catch (OperationCanceledException)

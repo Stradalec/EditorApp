@@ -117,10 +117,10 @@ namespace EditorApp.services
                 outputPath = Path.Combine(directory, $"{fileNameWithoutExt}{suffix}_{timestamp}{extension}");
             }
 
-
-
-
-            await Task.Run(() => File.Copy(originalPath, outputPath, overwrite: true));
+            if (!string.Equals(originalPath, outputPath, StringComparison.OrdinalIgnoreCase))
+            {
+                await Task.Run(() => File.Copy(originalPath, outputPath, overwrite: true));
+            }
 
             if (flag == "list")
             {

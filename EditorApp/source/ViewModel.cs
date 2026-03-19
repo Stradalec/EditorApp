@@ -168,8 +168,8 @@ namespace EditorApp.source
 
                     progressService.CompleteStep(stepIndex);
                     ++stepIndex;
-                    var lines = linkResult.Select(result => $"{(result.isAlive ? "ХОР" : "ПЛХ")} | {result.url} | {result.text}");
-                    _dialogService.ShowMessage(string.Join(Environment.NewLine, lines), "Оповещение", MessageBoxButton.OK);
+                    int badCount = linkResult.Count(result => !result.isAlive);
+                    _dialogService.ShowMessage($"Проверка завершена. Нерабочих ссылок: {badCount}. Они выделены красным в документе.", "Оповещение", MessageBoxButton.OK);
                 }
                 progressService.Finish();
             }

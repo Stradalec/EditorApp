@@ -148,10 +148,10 @@ namespace EditorApp.services
             return text.Trim();
         }
         public async Task<List<(string text, string url, bool isAlive)>> CheckLinksAsync(string filePath, IProgress<(int current, int total)>? progress, CancellationToken token)
-        {           
-            var collected = new List<(string text, string url)>();
+        {
+            var collected = new List<(string text, string url, OpenXmlElement element)>();
             var result = new List<(string text, string url, bool isAlive)>();
-            WordprocessingDocument document = WordprocessingDocument.Open(filePath, false);
+            WordprocessingDocument document = WordprocessingDocument.Open(filePath, true);
             var mainDocumentPart = document.MainDocumentPart;
             if (mainDocumentPart?.Document?.Body == null)
             {
@@ -171,7 +171,7 @@ namespace EditorApp.services
                 }
                 string url = relationship.Uri.ToString();
                 var text = string.Concat(link.Descendants<Text>().Select(linkText => linkText.Text));
-                collected.Add((text, url));
+                collected.Add((text, url, link));
             }
             foreach (var fieldSimple in mainDocumentPart.Document.Body.Descendants<OpenXmlElement>().Where(element => element.LocalName == "fldSimple"))
             {
@@ -181,7 +181,7 @@ namespace EditorApp.services
 
                 var text = string.Concat(fieldSimple.Descendants<Text>().Select(text => text.Text));
                 if (string.IsNullOrWhiteSpace(text)) text = url;
-                collected.Add((text, url));
+                collected.Add((text, url, fieldSimple));
             }
             string? currentInstr = null;
             bool inField = false;
@@ -204,7 +204,7 @@ namespace EditorApp.services
                             var url = ExtractUrlFromHyperlinkInstruction(currentInstr);
                             if (url != null && !collected.Any(result => result.Item2.Equals(url, StringComparison.OrdinalIgnoreCase)))
                             {
-                                collected.Add((url, url));
+                                break;
                             }
                                 
                         }
@@ -228,13 +228,19 @@ namespace EditorApp.services
             {
                 token.ThrowIfCancellationRequested();
 
-                var (text, url) = collected[tryUrlIndex];
+                var (text, url, element) = collected[tryUrlIndex];
                 bool ok = await TryUrlAsync(url, token);
+
+                if (!ok)
+                {
+                    PaintLinkRed(element);
+                }
 
                 result.Add((text, url, ok));
 
                 progress?.Report((tryUrlIndex + 1, total));
             }
+            mainDocumentPart.Document.Save();
             document.Dispose();
             return result;
         }
@@ -271,6 +277,19 @@ namespace EditorApp.services
                 return false;
             }
         }
+
+        private static void PaintLinkRed(OpenXmlElement element)
+        {
+            var runs = element.Descendants<Run>();
+
+            foreach (var run in runs)
+            {
+                run.RunProperties ??= new RunProperties();
+                run.RunProperties.Color = new Color() { Val = "FF0000" };
+            }
+        }
+
+
         private static string DetectLanguage(string inputString)
         {
             if (string.IsNullOrWhiteSpace(inputString)) 

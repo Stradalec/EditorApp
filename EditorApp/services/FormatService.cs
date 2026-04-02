@@ -293,9 +293,21 @@ namespace EditorApp.services
         private static string DetectLanguage(string inputString)
         {
             if (string.IsNullOrWhiteSpace(inputString))
+            {
                 return "RU";
+            }
 
-            int ruCount = Regex.Matches(inputString, @"[\u0400-\u04FF]").Count;
+
+            bool hasHttpsLink = inputString.Contains("https://", StringComparison.OrdinalIgnoreCase);
+            bool hasRussianLetter = Regex.IsMatch(inputString, @"[А-Яа-яЁё]");
+
+            if (hasHttpsLink && hasRussianLetter)
+            {
+                return "RU";
+            }
+                
+
+            int ruCount = Regex.Matches(inputString, @"[А-Яа-яЁё]").Count;
             int enCount = Regex.Matches(inputString, @"[A-Za-z]").Count;
 
             return ruCount > enCount ? "RU" : "EN";

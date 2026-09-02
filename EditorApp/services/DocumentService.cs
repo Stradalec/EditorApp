@@ -50,7 +50,7 @@ namespace EditorApp.services
 
                         if (element is Paragraph paragraph)
                         {
-                            string text = paragraph.InnerText;
+                            string text = ExtractTextPreservingIndices(paragraph);
                             var pageBreak = paragraph.Descendants<Break>().FirstOrDefault(b => b.Type?.Value == BreakValues.Page);
 
                             if (pageBreak != null && foundBibliography)
@@ -354,6 +354,62 @@ namespace EditorApp.services
             return newParagraph;
         }
 
-        
+        private static string ExtractTextPreservingIndices(Paragraph paragraph)
+        {
+            var sb = new StringBuilder();
+
+            foreach (var run in paragraph.Descendants<Run>())
+            {
+                string text = string.Concat(run.Elements<Text>().Select(t => t.Text));
+
+                var verticalAlign = run.RunProperties?
+                    .VerticalTextAlignment?
+                    .Val?
+                    .Value;
+
+                if (verticalAlign == VerticalPositionValues.Subscript)
+                {
+                    text = ToSubscript(text);
+                }
+                else if (verticalAlign == VerticalPositionValues.Superscript)
+                {
+                    text = ToSuperscript(text);
+                }
+
+                sb.Append(text);
+            }
+
+            return sb.ToString();
+        }
+
+        private static string ToSubscript(string text)
+        {
+            return text
+                .Replace('0', '₀')
+                .Replace('1', '₁')
+                .Replace('2', '₂')
+                .Replace('3', '₃')
+                .Replace('4', '₄')
+                .Replace('5', '₅')
+                .Replace('6', '₆')
+                .Replace('7', '₇')
+                .Replace('8', '₈')
+                .Replace('9', '₉');
+        }
+
+        private static string ToSuperscript(string text)
+        {
+            return text
+                .Replace('0', '⁰')
+                .Replace('1', '¹')
+                .Replace('2', '²')
+                .Replace('3', '³')
+                .Replace('4', '⁴')
+                .Replace('5', '⁵')
+                .Replace('6', '⁶')
+                .Replace('7', '⁷')
+                .Replace('8', '⁸')
+                .Replace('9', '⁹');
+        }
     }
 }

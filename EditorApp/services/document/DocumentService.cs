@@ -67,20 +67,6 @@ namespace EditorApp.services.document
             return Task.CompletedTask;
         }
         
-        
-
-        
-        private bool AreWordsEqual(string firstString, string secondString)
-        {
-            var cleanFirstString = RemovePunctuation(firstString).ToLowerInvariant();
-            var cleanSecondString = RemovePunctuation(secondString).ToLowerInvariant();
-            return cleanFirstString == cleanSecondString;
-        }
-
-        private string RemovePunctuation(string word)
-        {
-            return new string(word.Where(c => !char.IsPunctuation(c)).ToArray());
-        }
         private void OpenWithDefaultApp(string path)
         {
             try

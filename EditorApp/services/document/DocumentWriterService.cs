@@ -10,12 +10,12 @@ namespace EditorApp.services.document
 {
     internal class DocumentWriterService
     {
-        private readonly DocumentListDiffService _diffService = new DocumentListDiffService();
+        private readonly DocumentListDiffService _diffService;
         public DocumentWriterService(DocumentListDiffService diffService)
         {
             _diffService = diffService;
         }
-        public void AppendBibliographyToDocument(string docxPath, string bibliographyText, List<string> _oldLiteratureList)
+        public void AppendBibliographyToDocument(string docxPath, string bibliographyText, List<string> oldLiteratureList)
         {
             using var document = WordprocessingDocument.Open(docxPath, true);
             var body = document.MainDocumentPart!.Document.Body;
@@ -24,8 +24,8 @@ namespace EditorApp.services.document
             var newItems = bibliographyText.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
             for (int differenceIndex = 0; differenceIndex < newItems.Count; differenceIndex++)
             {
-                string newItem = newItems[differenceIndex];
-                string oldItem = differenceIndex < _oldLiteratureList.Count ? _oldLiteratureList[differenceIndex] : "";
+                string newItem = newItems[differenceIndex]; 
+                string oldItem = differenceIndex < oldLiteratureList.Count ? oldLiteratureList[differenceIndex] : "";
 
                 if (samplePara != null)
                 {
@@ -41,7 +41,7 @@ namespace EditorApp.services.document
             document.MainDocumentPart.Document.Save();
         }
 
-        private Paragraph GetFirstBibliographyParagraph(WordprocessingDocument inputDocument, string startKeyword = "Список литературы")
+        private Paragraph GetFirstBibliographyParagraph(WordprocessingDocument inputDocument)
         {
             var body = inputDocument.MainDocumentPart.Document.Body;
             bool foundStart = false;
@@ -51,8 +51,9 @@ namespace EditorApp.services.document
                 if (element is Paragraph paragraph)
                 {
                     string text = paragraph.InnerText;
-
-                    if (!foundStart && text.Contains(startKeyword, StringComparison.OrdinalIgnoreCase))
+                    string[] keywords = { "Список литературы", "Библиографический список", "Список источников", "Список использованных источников", "список использованной литературы" };
+                    bool containsList = keywords.Any(keyword => text.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+                    if (!foundStart && containsList)
                     {
                         foundStart = true;
                         continue;
@@ -60,7 +61,6 @@ namespace EditorApp.services.document
 
                     if (foundStart && !string.IsNullOrWhiteSpace(text))
                     {
-
                         return paragraph;
                     }
                 }
@@ -68,29 +68,6 @@ namespace EditorApp.services.document
 
             return null;
         }
-        private Paragraph CloneFormattedParagraph(string text, Paragraph sampleParagraph)
-        {
-
-            var newParagraph = new Paragraph();
-
-
-            if (sampleParagraph.ParagraphProperties != null)
-            {
-                newParagraph.ParagraphProperties = (ParagraphProperties)sampleParagraph.ParagraphProperties.CloneNode(true);
-            }
-
-
-            var run = new Run(new Text(text));
-
-
-            var sampleRun = sampleParagraph.Descendants<Run>().FirstOrDefault();
-            if (sampleRun?.RunProperties != null)
-            {
-                run.RunProperties = (RunProperties)sampleRun.RunProperties.CloneNode(true);
-            }
-
-            newParagraph.AppendChild(run);
-            return newParagraph;
-        }
+        
     }
 }

@@ -239,7 +239,10 @@ def register():
 @app.route("/templates", methods=["GET"])
 @require_api_key
 def list_templates():
-    items = [{"id": k, "title": k} for k in prompts_list.keys()]
+    items = [
+        {"id": "default", "title": "default"},
+        {"id": "test", "title": "test"},
+    ]
     return jsonify({"templates": items})
 active_template_key = {}  
 

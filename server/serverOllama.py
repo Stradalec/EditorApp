@@ -16,6 +16,7 @@ import hmac
 import time
 from threading import Semaphore
 import json
+from waitress import serve
 
 prompt_files = {
     "default": "system_prompt.txt",
@@ -329,6 +330,9 @@ def format_text():
                 f"[{g.request_id}] "
                 f"prompt_tokens={result.get('prompt_eval_count')} "
                 f"output_tokens={result.get('eval_count')}"
+                f"prompt_eval_ms={(result.get('prompt_eval_duration') or 0) / 1_000_000:.0f} "
+                f"eval_ms={(result.get('eval_duration') or 0) / 1_000_000:.0f} "
+                f"load_ms={(result.get('load_duration') or 0) / 1_000_000:.0f}"
             )
             message = result.get("message") or {}
             content = (message.get("content") or "").strip()
@@ -360,17 +364,27 @@ def format_text():
         return jsonify({"error": "Внутренняя ошибка сервера"}), 500
 
 if __name__ == "__main__":
+    observer = None
     try:
         observer = start_file_watcher()
         
         logger.info("Сервер запускается...")
         
-        app.run(host="0.0.0.0", port=44752, debug=False, threaded=True)
+        serve(
+            app,
+            host="0.0.0.0",
+            port=44752,
+            threads=4
+        )
         
     except KeyboardInterrupt:
-        logger.info("Остановка наблюдателя...")
-        observer.stop()
-        observer.join()
-        
-    except Exception as e:
-        logger.error(f"Ошибка при запуске: {e}")
+        logger.info("Остановка сервера...")
+
+    except Exception:
+        logger.exception("Ошибка при запуске сервера")
+
+    finally:
+        if observer is not None:
+            logger.info("Остановка наблюдателя...")
+            observer.stop()
+            observer.join()

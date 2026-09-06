@@ -244,21 +244,6 @@ def list_templates():
         {"id": "test", "title": "test"},
     ]
     return jsonify({"templates": items})
-active_template_key = {}  
-
-@app.route("/set_template", methods=["POST"])
-@require_api_key
-def set_template():
-    data = request.get_json(silent=True) or {}
-    template_id = (data.get("templateId") or "").strip()
-    if template_id not in prompts_list:
-        return jsonify({"error": "Unknown templateId"}), 400
-
-    
-    api_key_id = getattr(g, "api_key_hash", None) 
-    active_template_key[api_key_id] = template_id
-    return jsonify({"ok": True, "templateId": template_id})
-
 
 @app.route("/format", methods=["POST"])
 @require_api_key
@@ -280,19 +265,30 @@ def format_text():
             return jsonify({"error": "Запрос не должен быть пуст"}), 400
         if len(text) > MAX_INPUT_LENGTH:
             return jsonify({"error": f"Слишком большой объем текста. Максимальная длина: {MAX_INPUT_LENGTH} знаков."}), 413
-        if not llm_gate.acquire(timeout=1):
-            return jsonify({"error": "Модель занята, попробуйте ещё раз", "request_id": g.request_id}), 429
         wrapped_text = f"LANG={language}\n{text}"
-        api_key_id = getattr(g, "api_key_hash", None)
-        template_id = active_template_key.get(api_key_id, default_template)
-        logger.warning(f"[{g.request_id}] format key_id={'set' if api_key_id else 'NONE'} using_template={template_id}")
-        if language == "EN":
-            template_key = f"{template_id}_en"
-            system_prompt_used = prompts_list.get(template_key, prompts_list[template_id])
-        else:
-            system_prompt_used = prompts_list[template_id]
-        model_name = "qwen2.5noprompt"
+        template_id = (data.get("templateId") or default_template).strip()
+        if template_id not in ("default", "test"):
+            return jsonify({
+                "error": "Unknown templateId",
+                "request_id": g.request_id
+            }), 400
+        logger.warning(
+            f"[{g.request_id}] using_template={template_id}"
+        )
+
+        if not llm_gate.acquire(timeout=1):
+            return jsonify({
+                "error": "Модель занята, попробуйте ещё раз",
+                "request_id": g.request_id
+            }), 429
+
         try:
+            if language == "EN":
+                template_key = f"{template_id}_en"
+                system_prompt_used = prompts_list.get(template_key, prompts_list[template_id])
+            else:
+                system_prompt_used = prompts_list[template_id]
+            model_name = "qwen2.5noprompt"
             payload = {
                 "model": model_name,
                 "think": False,

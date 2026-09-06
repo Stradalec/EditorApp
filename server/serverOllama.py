@@ -22,6 +22,12 @@ prompts_list = {
     "test": open("test.txt", "r", encoding="utf-8").read(),
     "test_en": open("test_en.txt", "r", encoding="utf-8").read(),
 }
+prompt_files = {
+    "default": "system_prompt.txt",
+    "default_en": "system_prompt_en.txt",
+    "test": "test.txt",
+    "test_en": "test_en.txt",
+}
 default_template = "default"
 llm_gate = Semaphore(1)
 
@@ -56,19 +62,24 @@ def add_request_id_header(response):
 
 class PromptFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if os.path.abspath(event.src_path) == os.path.abspath(prompt_path):
-            logger.info(f"Обнаружено изменение файла промпта: {prompt_path}")
+        changed_path = os.path.abspath(event.src_path)
+        
+        for template_id, file_path in prompt_files.items():
+                if changed_path == os.path.abspath(file_path):
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            prompts_list[template_id] = f.read()
 
-            try:
-                with open(prompt_path, 'r', encoding='utf-8') as f:
-                    new_prompt = f.read()
+                        logger.info(
+                            f"Промпт {template_id} успешно обновлен без перезапуска сервера"
+                        )
 
-                prompts_list["default"] = new_prompt
+                    except Exception as e:
+                        logger.error(
+                            f"Ошибка при обновлении промпта {template_id}: {e}"
+                        )
 
-                logger.info("Системный промпт успешно обновлен без перезапуска сервера")
-
-            except Exception as e:
-                logger.error(f"Ошибка при обновлении промпта: {e}")
+                    break
 def start_file_watcher():
     event_handler = PromptFileHandler()
     

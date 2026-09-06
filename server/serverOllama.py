@@ -16,17 +16,16 @@ import hmac
 import time
 from threading import Semaphore
 import json
-prompts_list = {
-    "default": open("system_prompt.txt", "r", encoding="utf-8").read(),
-    "default_en": open("system_prompt_en.txt", "r", encoding="utf-8").read(),
-    "test": open("test.txt", "r", encoding="utf-8").read(),
-    "test_en": open("test_en.txt", "r", encoding="utf-8").read(),
-}
+
 prompt_files = {
     "default": "system_prompt.txt",
     "default_en": "system_prompt_en.txt",
     "test": "test.txt",
     "test_en": "test_en.txt",
+}
+prompts_list = {
+    template_id: open(file_path, "r", encoding="utf-8").read()
+    for template_id, file_path in prompt_files.items()
 }
 default_template = "default"
 llm_gate = Semaphore(1)
@@ -39,12 +38,11 @@ with open('configOllama.ini', 'r', encoding='utf-8') as config_file:
 DATABASE_URL = config['server']['database_api']
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-server_model_api = config['server']['model_api']
-prompt_path = config['model']['system_prompt_path']
 session = requests.Session()
 session.trust_env = False
 app = Flask(__name__)
-MODEL_API = server_model_api
+MODEL_API = config['server']['model_api']
+model_name = "qwen2.5noprompt"
 MAX_INPUT_LENGTH = 2048
 hash_alg = "sha256"
 hash_iterations = 600000
@@ -84,8 +82,8 @@ def start_file_watcher():
     event_handler = PromptFileHandler()
     
     observer = Observer()
-    
-    prompt_dir = os.path.dirname(os.path.abspath(prompt_path))
+    first_prompt_path = next(iter(prompt_files.values()))
+    prompt_dir = os.path.dirname(os.path.abspath(first_prompt_path))
     if not prompt_dir:  
         prompt_dir = "."
     
@@ -94,7 +92,7 @@ def start_file_watcher():
     
 
     observer.start()
-    logger.info(f"Наблюдатель запущен для отслеживания файла: {prompt_path}")
+    logger.info(f"Наблюдатель запущен для отслеживания файлов промпта: {first_prompt_path}")
     
     return observer
 
@@ -246,8 +244,9 @@ def register():
 @require_api_key
 def list_templates():
     items = [
-        {"id": "default", "title": "default"},
-        {"id": "test", "title": "test"},
+        {"id": template_id, "title": template_id}
+        for template_id in prompt_files
+        if not template_id.endswith("_en")
     ]
     return jsonify({"templates": items})
 
@@ -273,9 +272,9 @@ def format_text():
             return jsonify({"error": f"Слишком большой объем текста. Максимальная длина: {MAX_INPUT_LENGTH} знаков."}), 413
         wrapped_text = f"LANG={language}\n{text}"
         template_id = (data.get("templateId") or default_template).strip()
-        if template_id not in ("default", "test"):
+        if template_id not in prompt_files or template_id.endswith("_en"):
             return jsonify({
-                "error": "Unknown templateId",
+                "error": "Неизвестный вид шаблона",
                 "request_id": g.request_id
             }), 400
         logger.info(
@@ -294,7 +293,6 @@ def format_text():
                 system_prompt_used = prompts_list.get(template_key, prompts_list[template_id])
             else:
                 system_prompt_used = prompts_list[template_id]
-            model_name = "qwen2.5noprompt"
             payload = {
                 "model": model_name,
                 "think": False,
@@ -372,6 +370,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Остановка наблюдателя...")
         observer.stop()
+        observer.join()
         
     except Exception as e:
         logger.error(f"Ошибка при запуске: {e}")

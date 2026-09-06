@@ -6,13 +6,11 @@ from functools import wraps
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 import os  
-import threading
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import uuid
 import hashlib
 import secrets 
-from datetime import datetime, timezone
 import base64
 import hmac
 import time
@@ -37,10 +35,9 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 server_model_api = config['server']['model_api']
 prompt_path = config['model']['system_prompt_path']
-
+session = requests.Session()
+session.trust_env = False
 app = Flask(__name__)
-
-API_KEY = config['server']['api_key']
 MODEL_API = server_model_api
 MAX_INPUT_LENGTH = 2048
 hash_alg = "sha256"
@@ -298,17 +295,15 @@ def format_text():
 
 
 
-            t0 = time.time()
+            t0 = time.perf_counter()
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             logger.info(f"[{g.request_id}] LLM_CALL_START model={model_name} in_chars={len(wrapped_text)} sys_chars={len(system_prompt_used)} req_bytes={len(body)}")
             headers = {"Content-Type": "application/json"}
 
-            logger.error(f"OUTGOING bytes={len(body)}")
-            session = requests.Session()
-            session.trust_env = False
+            logger.info(f"OUTGOING bytes={len(body)}")
             response = session.post(MODEL_API, data=body, headers=headers, timeout=(5, 240))
             logger.info(f"RESP status={response.status_code} headers={dict(response.headers)}")
-            dt = time.time() - t0
+            dt = time.perf_counter() - t0
             logger.info(f"[{g.request_id}] LLM_CALL_END model={model_name} status={response.status_code} dt_ms={dt*1000:.0f} resp_bytes={len(response.content)}")
 
             if response.status_code >= 400:

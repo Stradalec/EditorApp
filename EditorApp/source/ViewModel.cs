@@ -39,7 +39,7 @@ namespace EditorApp.source
         public ObservableCollection<TemplateItem> Templates { get; } = new ObservableCollection<TemplateItem>
         {
             new TemplateItem { Id = "default", Title = "ГОСТ Р 7.0.100-2018" },
-            new TemplateItem { Id = "test", Title = "Тест" }
+            new TemplateItem { Id = "strict", Title = "ГОСТ Р 7.0.100-2018 (строгий)" }
         };
 
         [ObservableProperty]

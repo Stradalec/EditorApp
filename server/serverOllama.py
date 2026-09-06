@@ -20,7 +20,9 @@ from threading import Semaphore
 import json
 prompts_list = {
     "default": open("system_prompt.txt", "r", encoding="utf-8").read(),
+    "default_en": open("system_prompt_en.txt", "r", encoding="utf-8").read(),
     "test": open("test.txt", "r", encoding="utf-8").read(),
+    "test_en": open("test_en.txt", "r", encoding="utf-8").read(),
 }
 default_template = "default"
 llm_gate = Semaphore(1)
@@ -286,10 +288,15 @@ def format_text():
         api_key_id = getattr(g, "api_key_hash", None)
         template_id = active_template_key.get(api_key_id, default_template)
         logger.warning(f"[{g.request_id}] format key_id={'set' if api_key_id else 'NONE'} using_template={template_id}")
-        system_prompt_used = prompts_list[template_id]
+        if language == "EN":
+            template_key = f"{template_id}_en"
+            system_prompt_used = prompts_list.get(template_key, prompts_list[template_id])
+        else:
+            system_prompt_used = prompts_list[template_id]
+        model_name = "qwen2.5noprompt"
         try:
             payload = {
-                "model": "qwen2.5noprompt",
+                "model": model_name,
                 "think": False,
                 "messages": [ {'role': 'system', 'content': system_prompt_used}, {"role":"user","content": wrapped_text}],
                 "stream": False
@@ -301,6 +308,7 @@ def format_text():
 
             t0 = time.time()
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            logger.info(f"[{g.request_id}] LLM_CALL_START model={model_name} in_chars={len(wrapped_text)} sys_chars={len(system_prompt_used)} req_bytes={len(body)}")
             headers = {"Content-Type": "application/json"}
 
             logger.error(f"OUTGOING bytes={len(body)} first200={body[:200]!r}")
@@ -309,6 +317,7 @@ def format_text():
             response = session.post(MODEL_API, data=body, headers=headers, timeout=(5, 240))
             logger.error(f"RESP status={response.status_code} headers={dict(response.headers)}")
             dt = time.time() - t0
+            logger.info(f"[{g.request_id}] LLM_CALL_END model={model_name} status={response.status_code} dt_ms={dt*1000:.0f} resp_bytes={len(response.content)}")
 
             if response.status_code >= 400:
                 logger.error(f"Ollama status={response.status_code} in {dt:.2f}s body_len={len(response.content)} body={response.text!r}")

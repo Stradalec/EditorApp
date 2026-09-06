@@ -35,13 +35,8 @@ with open('configOllama.ini', 'r', encoding='utf-8') as config_file:
 DATABASE_URL = config['server']['database_api']
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
 server_model_api = config['server']['model_api']
-system_prompt = ""
 prompt_path = config['model']['system_prompt_path']
-with open(prompt_path, 'r', encoding='utf-8') as f:
-    system_prompt = f.read()
 
 app = Flask(__name__)
 
@@ -64,17 +59,17 @@ def add_request_id_header(response):
 
 class PromptFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
-        if event.src_path == os.path.abspath(prompt_path):
+        if os.path.abspath(event.src_path) == os.path.abspath(prompt_path):
             logger.info(f"Обнаружено изменение файла промпта: {prompt_path}")
+
             try:
                 with open(prompt_path, 'r', encoding='utf-8') as f:
                     new_prompt = f.read()
-                
-                global system_prompt
-                system_prompt = new_prompt
-                
+
+                prompts_list["default"] = new_prompt
+
                 logger.info("Системный промпт успешно обновлен без перезапуска сервера")
-                
+
             except Exception as e:
                 logger.error(f"Ошибка при обновлении промпта: {e}")
 def start_file_watcher():

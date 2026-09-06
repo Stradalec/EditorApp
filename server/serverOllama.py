@@ -164,12 +164,11 @@ def register():
     invite_code = (data.get("invite_code") or "").strip()
     user_name = (data.get("user_name") or "").strip()
     role = "user"  
-    logger.warning(f"Начался запрос")
+    logger.info(f"Начался запрос от пользователя: {user_name}")
     if not invite_code or not user_name:
         return jsonify({"error": "Нужны invite_code и user_name", "request_id": g.request_id}), 400
 
     invite_hash = sha256_hex(invite_code)
-    logger.warning(f"Захешил инвайт")
     db = SessionLocal()
     try:
         
@@ -181,16 +180,14 @@ def register():
                 where code_hash = :h
                 for update
             """), {"h": invite_hash}).mappings().first()
-            logger.warning(f"Залез в базу")
             if row is None:
-                logger.warning(f"Нету такого")
-                return jsonify({"error": "Инвайт-код не найден", "request_id": g.request_id}), 400
+                logger.info(f"Приглашения никогда не существовало.")
+                return jsonify({"error": "Код-приглашение не найден", "request_id": g.request_id}), 400
 
             if row["used_at"] is not None:
-                logger.warning(f"Уже использован")
-                return jsonify({"error": "Инвайт-код уже использован", "request_id": g.request_id}), 400
+                logger.info(f"Приглашение уже использовано.")
+                return jsonify({"error": "Приглашение уже использовано", "request_id": g.request_id}), 400
 
-            logger.warning(f"Проверяю, не истёк ли")
             expired = db.execute(text("""
                 select (expires_at <= now()) as expired
                 from invites
@@ -198,16 +195,15 @@ def register():
             """), {"id": row["id"]}).scalar()
             
             if expired:
-                logger.warning(f"Уже истёк")
+                logger.info(f"Код истёк.")
                 return jsonify({"error": "Срок действия инвайта истёк", "request_id": g.request_id}), 400
 
-            logger.warning(f"Создаю юзера")
             user_id = db.execute(text("""
                 insert into users (user_name, role)
                 values (:user_name, :role)
                 returning id
             """), {"user_name": user_name, "role": role}).scalar()
-
+                
             
             api_key_plain = generate_key()
             api_key_hash = hash_key(api_key_plain)
@@ -224,7 +220,9 @@ def register():
                 where id = :id
             """), {"user_id": user_id, "id": row["id"]})
 
-        
+            logger.info(
+                f"[{g.request_id}] успешно зарегистрировал пользователя ={user_name}"
+            )
         return jsonify({
             "user_name": user_name,
             "api_key": api_key_plain
@@ -272,7 +270,7 @@ def format_text():
                 "error": "Unknown templateId",
                 "request_id": g.request_id
             }), 400
-        logger.warning(
+        logger.info(
             f"[{g.request_id}] using_template={template_id}"
         )
 
@@ -305,19 +303,29 @@ def format_text():
             logger.info(f"[{g.request_id}] LLM_CALL_START model={model_name} in_chars={len(wrapped_text)} sys_chars={len(system_prompt_used)} req_bytes={len(body)}")
             headers = {"Content-Type": "application/json"}
 
-            logger.error(f"OUTGOING bytes={len(body)} first200={body[:200]!r}")
+            logger.error(f"OUTGOING bytes={len(body)}")
             session = requests.Session()
             session.trust_env = False
             response = session.post(MODEL_API, data=body, headers=headers, timeout=(5, 240))
-            logger.error(f"RESP status={response.status_code} headers={dict(response.headers)}")
+            logger.info(f"RESP status={response.status_code} headers={dict(response.headers)}")
             dt = time.time() - t0
             logger.info(f"[{g.request_id}] LLM_CALL_END model={model_name} status={response.status_code} dt_ms={dt*1000:.0f} resp_bytes={len(response.content)}")
 
             if response.status_code >= 400:
-                logger.error(f"Ollama status={response.status_code} in {dt:.2f}s body_len={len(response.content)} body={response.text!r}")
+                logger.error(
+                    f"[{g.request_id}] Ollama error "
+                    f"status={response.status_code} "
+                    f"dt={dt:.2f}s "
+                    f"body_len={len(response.content)}"
+                )
                 response.raise_for_status()
 
             result = response.json()
+            logger.info(
+                f"[{g.request_id}] "
+                f"prompt_tokens={result.get('prompt_eval_count')} "
+                f"output_tokens={result.get('eval_count')}"
+            )
             message = result.get("message") or {}
             content = (message.get("content") or "").strip()
             if not content:

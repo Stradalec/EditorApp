@@ -23,6 +23,8 @@ prompt_files = {
     "default_en": "system_prompt_en.txt",
     "test": "test.txt",
     "test_en": "test_en.txt",
+    "strict": "system_prompt_strict.txt",
+    "strict_en": "system_prompt_strict_en.txt",
 }
 prompts_list = {
     template_id: open(file_path, "r", encoding="utf-8").read()

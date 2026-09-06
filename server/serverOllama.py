@@ -353,7 +353,7 @@ if __name__ == "__main__":
         
         logger.info("Сервер запускается...")
         
-        app.run(host="0.0.0.0", port=44752, debug=False, threaded=False)
+        app.run(host="0.0.0.0", port=44752, debug=False, threaded=True)
         
     except KeyboardInterrupt:
         logger.info("Остановка наблюдателя...")

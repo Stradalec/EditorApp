@@ -1,0 +1,144 @@
+﻿<Window x:Class="EditorApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EditorApp"
+        mc:Ignorable="d"
+        AllowDrop="True"
+        Drop="HandleDrop"
+        DragEnter="HandleDragEnter"
+        DragLeave="HandleDragLeave"
+        Title="Цифровой помощник редактора" Height="600" Width="1000"
+        Background="#FFFFF0">
+  <Grid Style="{DynamicResource GridStyle}">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <StackPanel Grid.Column="1" HorizontalAlignment="Stretch">
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+        <Button Template="{DynamicResource StartButtonsGroup}"
+          Command="{Binding OpenDocumentCommand}" ToolTip="Открывает загруженный документ.">
+          Открыть
+        </Button>
+
+        <Grid Margin="12,0,0,0"
+        VerticalAlignment="Center"
+        Width="650"
+        Height="70"
+        AllowDrop="True"
+        Drop="HandleDrop"
+        DragEnter="HandleDragEnter"
+        DragOver="HandleDragOver"
+        DragLeave="HandleDragLeave">
+
+          <Border x:Name="DropZoneBackground" CornerRadius="10">
+            <Border.Style>
+              <Style TargetType="Border">
+                <Setter Property="Background" Value="#10FFFFFF"/>
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsDragOver, RelativeSource={RelativeSource AncestorType=Window}}"
+                     Value="True">
+                    <Setter Property="Background" Value="#2200FF00"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Border.Style>
+          </Border>
+
+
+          <Rectangle RadiusX="10" RadiusY="10"
+               StrokeThickness="2"
+               Stroke="#AA000000"
+               StrokeDashArray="6 4"
+               Fill="Transparent"
+               ToolTip="Перетащите файл в это окно для того, чтобы программа могла с ним работать"/>
+
+
+          <TextBlock HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               TextAlignment="Center"
+               FontSize="18"
+               FontWeight="SemiBold"
+               Foreground="Black">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Text"
+                  Value="{Binding SelectedDocument.DocumentName, TargetNullValue='Перетащите .docx файл сюда'}"/>
+
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsDragOver, RelativeSource={RelativeSource AncestorType=Window}}"
+                         Value="True">
+                    <Setter Property="Text" Value="Отпустите, чтобы открыть .docx"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+
+        </Grid>
+        <Button Template="{DynamicResource ImageButton}" 
+  Command="{Binding OpenHelpCommand}" ToolTip="Информация о программе" Background="Transparent" Margin="15,15,15,15" BorderThickness="0,0,0,0">
+          <Image Source="/icons/icon_help.png" Width="40" Height="40"/>
+        </Button>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal">
+        <ComboBox Width="900" Height="40"
+          FontSize = "24"
+          VerticalAlignment="Center"
+          ItemsSource="{Binding Templates}"
+          SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
+          DisplayMemberPath="Title"
+          ToolTip="Выберите шаблон форматирования"/>
+      </StackPanel>
+      <ListBox Style="{DynamicResource ListBox}">
+        <ListBoxItem Style="{DynamicResource ListBoxItem}" Padding="5">
+          <StackPanel Orientation="Horizontal">
+            <CheckBox Style="{DynamicResource CheckBox}" Width="24" IsChecked="{Binding SelectedOptions.IsFormatActive, Mode=TwoWay}"/>
+            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Форматирование списка литературы"/>
+          </StackPanel>
+        </ListBoxItem>
+        <ListBoxItem Style="{DynamicResource ListBoxItem}"  Padding="5">
+          <StackPanel Orientation="Horizontal">
+            <CheckBox Style="{DynamicResource CheckBox}" Width="24" IsChecked="{Binding SelectedOptions.IsReferencesActive, Mode=TwoWay}"/>
+            <TextBlock Style="{DynamicResource BlackTextBlock}" Margin="10,0,0,0" Text="Работа с гиперссылками"/>
+          </StackPanel>
+        </ListBoxItem>
+      </ListBox>
+      <DockPanel LastChildFill="False" HorizontalAlignment="Left">
+        <Button DockPanel.Dock="Left" Template="{DynamicResource ButtonTextBorderBold}"  Command="{Binding ProcessAndSaveDocumentCommand}" ToolTip="Начать выбранные операции с документом">Запустить</Button>
+        <Button DockPanel.Dock="Right" Template="{DynamicResource TextButton1}" Command="{Binding CancelAnyProcessCommand}" ToolTip="Прервать процесс обработки документа без сохранения">Прервать операцию</Button> 
+      </DockPanel>
+      <StackPanel Margin="10">
+        <ProgressBar 
+        Value="{Binding ProgressValue}" 
+        Maximum="{Binding ProgressMaximum}"
+        Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+        Height="25" 
+        Margin="0,5,0,5"
+        IsIndeterminate="False"/>
+
+        <TextBlock 
+        Text="{Binding ProgressText}" 
+        Style="{DynamicResource BlackTextBlock}"
+        Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+        HorizontalAlignment="Center"
+        FontSize="24"
+        FontStyle="Italic"
+        ToolTip="Прогресс работы со списком литературы отображается в пунктах"/>
+        <TextBlock
+          Text="{Binding EstimatedTimeText}"
+          Style="{DynamicResource BlackTextBlock}"
+          Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+          HorizontalAlignment="Center"
+          FontSize="18"
+          Margin="0,0,0,6"/>
+      </StackPanel>
+    </StackPanel>
+
+  </Grid>
+
+
+
+
+</Window>

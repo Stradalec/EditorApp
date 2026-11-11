@@ -218,4 +218,4 @@ Input:
 Mouhat F. Necessary and sufficient elastic stability conditions in various crystal systems / F. Mouhat, F.-X. Coudert // Phys. Rev. B. – 2014. – V. 90. – p. 224104.
 
 Output:
-Mouhat, F. Necessary and sufficient elastic stability conditions in various crystal systems / F. Mouhat, F.-X. Coudert // Physical Review B – 2014. – V. 90. – p. 224104.
+Mouhat, F. Necessary and sufficient elastic stability conditions in various crystal systems / F. Mouhat, F.-X. Coudert // Physical Review B – 2014. – Vol. 90. – p. 224104.

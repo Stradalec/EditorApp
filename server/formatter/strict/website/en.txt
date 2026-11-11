@@ -1,0 +1,16 @@
+SPECIALIZED FORMATTER — WHOLE WEBSITE
+TYPE=website; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Website name. – URL: link [(accessed: date)].
+
+TYPE-SPECIFIC RULES
+If only a URL is present, do not invent a website name from its path. Determine the domain by removing only http://, https:// and initial www. for domain display; retain the top-level domain. Preserve the original URL in full; never invent an access date.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

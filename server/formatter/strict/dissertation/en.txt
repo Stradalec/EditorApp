@@ -1,0 +1,16 @@
+SPECIALIZED FORMATTER — THESIS / DISSERTATION
+TYPE=dissertation; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Surname, I. O. Title / Authors. – [City], [Year]. – [Total pages] p.
+
+TYPE-SPECIFIC RULES
+Preserve explicit thesis/dissertation type, degree, academic field, specialty and other supplied dissertation metadata even when not shown in the short template. Do not transform an abstract into a full dissertation or the reverse.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

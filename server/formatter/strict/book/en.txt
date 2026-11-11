@@ -1,0 +1,17 @@
+SPECIALIZED FORMATTER — BOOK
+TYPE=book; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Surname, I. O. Title / Authors. – [City][: Publisher], [Year]. – [Volume if present]. – [Total pages] p. – [Identifiers if present].
+If publisher is absent: Surname, I. O. Title / Authors. – [City], [Year]. – [Volume if present]. – [Total pages] p. – [Identifiers if present].
+
+TYPE-SPECIFIC RULES
+Preserve volume, publisher, edition details and total page count if present. Distinguish total number of pages from the page range of an article. Do not turn M. into Moscow unless an explicit project rule permits this.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

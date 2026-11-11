@@ -1,0 +1,16 @@
+SPECIALIZED FORMATTER — WEBPAGE
+TYPE=webpage; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Page title // domain. – URL: link [(accessed: date)].
+
+TYPE-SPECIFIC RULES
+Use only an explicitly supplied page title. After // show the domain, removing only http://, https:// and initial www. for domain display and keeping its top-level domain. Preserve the full URL and an access date only when supplied. Never construct a title from the URL path.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

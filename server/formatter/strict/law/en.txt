@@ -1,0 +1,16 @@
+SPECIALIZED FORMATTER — LAW OR NORMATIVE ACT
+TYPE=law; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Title: type, number, date // Source. – [Date/year]. – No. [Issue]. – Art. [Article].
+
+TYPE-SPECIFIC RULES
+Preserve the act type, number, date, title and publication source, issue and article references if present. Do not confuse an act number with publication issue or article numbers. Keep existing outer quotation marks where present; do not invent missing official details.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

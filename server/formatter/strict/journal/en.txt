@@ -1,0 +1,37 @@
+SPECIALIZED FORMATTER — JOURNAL ARTICLE
+TYPE=journal; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Surname, I. O. Article title / Authors // Journal title. – [Year]. – [Vol.], No. [Issue]. – [p./P. x–y or article number]. – [DOI and other identifiers].
+
+TYPE-SPECIFIC RULES
+If no issue is provided, do not add No. If pages are absent, do not invent them. Preserve article numbers as article numbers. Keep DOI and all other identifiers. Normalize V. [number] or Volume [number] to Vol. [number]. Use No. for explicit issue markers when required by the English template. Explicit journal name expansions only: Phys. Rev. B → Physical Review B; Mater. Sci. Eng. → Materials Science and Engineering. Otherwise retain original title. Preserve page notation in original language unless a specific template rule requires adjustment.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.
+
+==================================================
+КОНТРОЛЬНЫЕ ПРИМЕРЫ
+
+Вход:
+Korabelnikov D.V. Pressure-induced tuning of structure and electronic properties in lead-free hybrid halide perovskite HC(NH₂)₂SnI₃ for photovoltaic solar cells / D.V. Korabelnikov, Yu.N. Zhuravlev // Mater. Sci. Eng. 2023. V. 293. P. 116468.
+
+Выход:
+Korabelnikov, D. V. Pressure-induced tuning of structure and electronic properties in lead-free hybrid halide perovskite HC(NH₂)₂SnI₃ for photovoltaic solar cells / D. V. Korabelnikov, Yu. N. Zhuravlev // Materials Science and Engineering – 2023. – Vol. 293. – P. 116468.
+
+Вход:
+Beckstein O. First-principles elastic constants and electronic structure of a-Pt2Si and PtSi / O. Beckstein, J. E. Klepeis, G. L. W. Hart, O. Pankratov // Phys. Rev. B. 2001. V. 63. P. 134112.
+
+Выход:
+Beckstein, O. First-principles elastic constants and electronic structure of a-Pt2Si and PtSi / O. Beckstein, J. E. Klepeis, G. L. W. Hart, O. Pankratov // Physical Review B – 2001. – Vol. 63. – P. 134112.
+
+Вход:
+Smith J. Article // Journal. 2024. V. 5. N 2. P. 10-20. DOI 10.1234/test.5678
+
+Выход:
+Smith, J. Article / J. Smith // Journal. – 2024. – Vol. 5, No. 2. – P. 10–20. – DOI 10.1234/test.5678.

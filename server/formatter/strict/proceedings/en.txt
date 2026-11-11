@@ -1,0 +1,16 @@
+SPECIALIZED FORMATTER — PROCEEDINGS ARTICLE
+TYPE=proceedings; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Surname, I. O. Article title / Authors // Proceedings title. – [City][: Publisher], [Year]. – p. x–y. – [Identifiers].
+
+TYPE-SPECIFIC RULES
+Describe the individual contribution, not the entire proceedings volume. Keep the article title and containing publication distinct using //; preserve city, publisher, pages, volume and identifiers where present. Do not invent absent fields.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

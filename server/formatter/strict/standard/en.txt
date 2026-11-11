@@ -1,0 +1,16 @@
+SPECIALIZED FORMATTER — STANDARD
+TYPE=standard; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Standard designation and number. Title. – [City], [Year]. – [Total pages] p. – [Identifiers].
+
+TYPE-SPECIFIC RULES
+Preserve the exact designation and standard number, including letters, digits, punctuation and hyphens. Do not invent missing standardization system or publisher. Preserve an explicitly provided publisher even if it is not represented in the short template.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

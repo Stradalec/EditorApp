@@ -1,0 +1,16 @@
+SPECIALIZED FORMATTER — PATENT
+TYPE=patent; LANG=EN
+
+This block is used ONLY after common_en.txt. Source classification has already been completed. Format a single reference of the selected type; do not select a different template.
+
+TEMPLATE FROM ORIGINAL STRICT PROMPT
+Patent No. [Number] [country/classification if present]. Title: [application number]: filed [date]: published [date] / Authors; applicant [Organization]. – [Total pages] p.
+
+TYPE-SPECIFIC RULES
+Preserve patent number, application number, classification, filing/publication dates, inventor/authors, applicant and country only when explicitly supplied. Never confuse the patent and application numbers or add a country code not in the source.
+
+MISSING DATA
+Square brackets in the template indicate optional placeholders, not literal output characters. Omit absent fields and their dangling separators. Never invent data; preserve supplied details even when the short template has no dedicated placeholder. Follow the common preservation rules for identifiers, formulas and personal names.
+
+OUTPUT
+Exactly one formatted bibliographic entry, without explanation.

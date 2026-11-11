@@ -24,7 +24,9 @@ namespace EditorApp
             var builder = new ConfigurationBuilder().SetBasePath(AppDomain.CurrentDomain.BaseDirectory).AddJsonFile("appSettings.json", optional: false, reloadOnChange: true);
             IConfigurationRoot configuration = builder.Build();
             string serverAddress = configuration["ServerData:Address"];
-            var httpClient = new HttpClient {
+            var httpClient = new HttpClient(new HttpClientHandler {
+                AllowAutoRedirect = false
+            }) {
                 BaseAddress = new Uri(serverAddress)
             };
             var keyStore = new ApiKeyStore();           
@@ -53,8 +55,12 @@ namespace EditorApp
             }
             httpClient.DefaultRequestHeaders.Remove("X-API-Key");
             httpClient.DefaultRequestHeaders.Add("X-API-Key", savedKey);
-            var formatService = new FormatService(httpClient);
-            
+            var linkHttpClient = new HttpClient(new HttpClientHandler {
+                UseCookies = false,
+                UseDefaultCredentials = false
+            });
+
+            var formatService = new FormatService(httpClient, linkHttpClient);
             var documentService = new DocumentService();
             
             var createdViewModel = new ApplicationViewModel(documentService, dialogService, formatService, httpClient);

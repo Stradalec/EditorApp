@@ -21,9 +21,11 @@ namespace EditorApp.services
     internal class FormatService : IFormatService
     {
         private readonly HttpClient _httpClient;
-        public FormatService(HttpClient httpClient)
+        private readonly HttpClient _linkHttpClient;
+        public FormatService(HttpClient httpClient, HttpClient linkHttpClient)
         {
             _httpClient = httpClient;
+            _linkHttpClient = linkHttpClient;
         }
 
         public async Task<string> FormatBibliographyAsync(string rawText, TemplateItem selectedTemplatedId, IProgress<(int current, int total)> progress, CancellationToken cancellationToken)
@@ -256,21 +258,39 @@ namespace EditorApp.services
         public async Task<bool> TryUrlAsync(string url, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp &&
+                 uri.Scheme != Uri.UriSchemeHttps))
+            {
+                return false;
+            }
+
             try
             {
-                using var requestHead = new HttpRequestMessage(HttpMethod.Head, url);
-                using var response = await _httpClient.SendAsync(requestHead);
-                if ((int)response.StatusCode == 405 || (int)response.StatusCode == 403)
+                using var requestHead = new HttpRequestMessage(HttpMethod.Head, uri);
+                using var response = await _linkHttpClient.SendAsync(
+                    requestHead,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    token);
+
+                if ((int)response.StatusCode == 405 ||
+                    (int)response.StatusCode == 403)
                 {
-                    using var requestGet = new HttpRequestMessage(HttpMethod.Get, url);
-                    using var responseGet = await _httpClient.SendAsync(requestGet);
+                    using var requestGet = new HttpRequestMessage(HttpMethod.Get, uri);
+                    using var responseGet = await _linkHttpClient.SendAsync(
+                        requestGet,
+                        HttpCompletionOption.ResponseHeadersRead,
+                        token);
+
                     return responseGet.IsSuccessStatusCode;
                 }
+
                 return response.IsSuccessStatusCode;
             }
             catch (OperationCanceledException)
             {
-                throw; 
+                throw;
             }
             catch
             {
@@ -290,7 +310,7 @@ namespace EditorApp.services
         }
 
 
-        private static string DetectLanguage(string inputString)
+        internal static string DetectLanguage(string inputString)
         {
             if (string.IsNullOrWhiteSpace(inputString))
             {

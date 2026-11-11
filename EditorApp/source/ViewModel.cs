@@ -225,6 +225,21 @@ namespace EditorApp.source
         {
             _dialogService.ShowMessage("В модель идёт обрабатываться весь текст после слов \"список литературы\". Записи отправляются по принципу \"новый абзац\" - \"новая запись\". \r\n В среднем обработка списка литературы занимает 3-7 минут (при списке приблизительно в 20 элементов). Для отслеживания есть шкала прогресса. \r\n Прогресс работы со списком литературы отображается в пунктах этого списка, для ссылок - в количестве обработанных ссылок ", "Справка", MessageBoxButton.OK);
         }
+        [RelayCommand]
+        private void OpenFeedback()
+        {
+            var window = new FeedbackWindow(_httpClient, SelectedTemplate?.Id ?? "default") {
+                Owner = Application.Current.MainWindow
+            };
+
+            if (window.ShowDialog() == true)
+            {
+                _dialogService.ShowMessage(
+                    "Отзыв отправлен.",
+                    "Ошибка форматирования",
+                    MessageBoxButton.OK);
+            }
+        }
         public ApplicationViewModel(IDocumentService documentService, IDialogService dialogService, IFormatService formatService, HttpClient httpClient)
         {
             _documentService = documentService;

@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EditorApp"
         mc:Ignorable="d"
-        Title="Зарегистрировать программу" Height="300" Width="400"
-        WindowStartupLocation="CenterScreen">
-    <Grid Margin="16">
+        Title="Зарегистрировать программу" Height="340" Width="400"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource AppWindowBackground}">
+    <Grid Margin="30">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
@@ -15,23 +16,27 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
     <StackPanel Grid.Row="0" Margin="0,0,0,12">
-      <TextBlock Text="Имя пользователя"
-                       Margin="0,0,0,4"/>
-      <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"
-                     Height="28"/>
+      <Label Content="Имя пользователя"
+         Target="{Binding ElementName=UserNameBox}"
+         Style="{StaticResource FormLabel}"/>
+      <TextBox x:Name="UserNameBox"
+           Style="{StaticResource FormTextBox}"
+           Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
     </StackPanel>
+
     <StackPanel Grid.Row="1" Margin="0,0,0,12">
-      <TextBlock Text="Код приглашения"
-                       Margin="0,0,0,4"/>
-      <TextBox Text="{Binding InviteCode, UpdateSourceTrigger=PropertyChanged}"
-                     Height="28"/>
+      <Label Content="Код приглашения"
+         Target="{Binding ElementName=InviteCodeBox}"
+         Style="{StaticResource FormLabel}"/>
+      <TextBox x:Name="InviteCodeBox"
+           Style="{StaticResource FormTextBox}"
+           Text="{Binding InviteCode, UpdateSourceTrigger=PropertyChanged}"/>
     </StackPanel>
-    <Button Grid.Row="3"       
-                Content="Зарегистрироваться"
-                Template="{DynamicResource StartButtonsGroup}"
-                Height="60"
-                HorizontalAlignment="Center"
-                Width="300"
-                Command="{Binding RegisterCommand}"/>
+
+    <Button Grid.Row="3"
+        Content="Зарегистрироваться"
+        Command="{Binding RegisterCommand}"
+        Style="{StaticResource FormPrimaryButton}"
+        HorizontalAlignment="Stretch"/>
   </Grid>
 </Window>

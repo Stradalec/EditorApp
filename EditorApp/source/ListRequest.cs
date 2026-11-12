@@ -16,5 +16,6 @@ namespace EditorApp.source
     public class ListResponse
     {
         public string result { get; set; } = "";
+        public bool missing_data { get; set; }
     }
 }

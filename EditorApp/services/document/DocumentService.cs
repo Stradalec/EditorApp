@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using EditorApp.source;
 namespace EditorApp.services.document
 {
     internal class DocumentService : IDocumentService
@@ -22,15 +23,13 @@ namespace EditorApp.services.document
             _diffService = new DocumentListDiffService();
             _writerService = new DocumentWriterService(_diffService);
         }
-        private List<string> _oldLiteratureList = new List<string>();
         public async Task<string> ExtractBibliographyAsync(string filePath)
         {
             var result = await _extractService.ExtractBibliography(filePath);
-            _oldLiteratureList = result.Items;
             return result.Text;
         }
 
-        public async Task<string> SaveAsProcessedAsync(string originalPath, string bibliographyText, string flag, string suffix = "_Обработано")
+        public async Task<string> SaveAsProcessedAsync(string originalPath, IReadOnlyList<BibliographyItemResult> bibliography, string flag, string suffix = "_Обработано")
         {
             if (!File.Exists(originalPath)) 
             {
@@ -55,7 +54,7 @@ namespace EditorApp.services.document
 
             if (flag == "list")
             {
-                await Task.Run(() => _writerService.AppendBibliographyToDocument(outputPath, bibliographyText, _oldLiteratureList));
+                await Task.Run(() => _writerService.AppendBibliographyToDocument(outputPath, bibliography));
             }
                 
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EditorApp.source;
 
 namespace EditorApp.services.document
 {
@@ -15,30 +16,38 @@ namespace EditorApp.services.document
         {
             _diffService = diffService;
         }
-        public void AppendBibliographyToDocument(string docxPath, string bibliographyText, List<string> oldLiteratureList)
+        public void AppendBibliographyToDocument(
+            string docxPath,
+            IReadOnlyList<BibliographyItemResult> bibliography)
         {
             using var document = WordprocessingDocument.Open(docxPath, true);
-            var body = document.MainDocumentPart!.Document.Body;
-            Paragraph samplePara = GetFirstBibliographyParagraph(document);
-            body.AppendChild(new Paragraph());
-            var newItems = bibliographyText.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
-            for (int differenceIndex = 0; differenceIndex < newItems.Count; differenceIndex++)
+            var mainPart = document.MainDocumentPart!;
+            var body = mainPart.Document.Body!;
+            var sample = GetFirstBibliographyParagraph(document);
+            var finalSection = body.Elements<SectionProperties>().LastOrDefault();
+
+            body.InsertBefore(new Paragraph(), finalSection);
+
+            foreach (var item in bibliography)
             {
-                string newItem = newItems[differenceIndex]; 
-                string oldItem = differenceIndex < oldLiteratureList.Count ? oldLiteratureList[differenceIndex] : "";
+                var paragraph = sample != null
+                    ? _diffService.CreateDiffParagraph(
+                        item.OutputText, item.OriginalText, sample)
+                    : new Paragraph(new Run(new Text(item.OutputText)));
 
-                if (samplePara != null)
+                if (item.HighlightAmber)
                 {
+                    foreach (var run in paragraph.Descendants<Run>())
+                    {
+                        run.RunProperties ??= new RunProperties();
+                        run.RunProperties.Color = new Color { Val = "B45309" };
+                    }
+                }
 
-                    body.AppendChild(_diffService.CreateDiffParagraph(newItem, oldItem, samplePara));
-                }
-                else
-                {
-                    body.AppendChild(new Paragraph(new Run(new Text(newItem))));
-                }
+                body.InsertBefore(paragraph, finalSection);
             }
 
-            document.MainDocumentPart.Document.Save();
+            mainPart.Document.Save();
         }
 
         private Paragraph GetFirstBibliographyParagraph(WordprocessingDocument inputDocument)

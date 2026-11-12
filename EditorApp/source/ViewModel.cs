@@ -31,8 +31,6 @@ namespace EditorApp.source
         [ObservableProperty]
         private Document selectedDocument;
         [ObservableProperty]
-        private string _formattedBibliography = "";
-        [ObservableProperty]
         private bool _isProcessing;
         [ObservableProperty]
         private FormatOptions _selectedOptions = new FormatOptions();
@@ -169,9 +167,28 @@ namespace EditorApp.source
                 {
                     progressService.SetText("Извлечение списка литературы...");
                     var stepProgress = progressService.CreateStepProgress(stepIndex);
-                    FormattedBibliography = await _formatService.FormatBibliographyAsync(SelectedDocument.BibliographyContent, SelectedTemplate, stepProgress, _cancellationTokenSource.Token);
-                    progressService.SetText("Сохранение файла...");
-                    newDocumentPath = await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography, "list");
+                    var bibliography = await _formatService.FormatBibliographyAsync(
+                        SelectedDocument.BibliographyContent,
+                        SelectedTemplate,
+                        stepProgress,
+                        _cancellationTokenSource.Token);
+
+                    _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+
+                    if (bibliography.Count > 0)
+                    {
+                        progressService.SetText("Сохранение файла...");
+                        newDocumentPath = await _documentService.SaveAsProcessedAsync(
+                            SelectedDocument.FilePath, bibliography, "list");
+                    }
+                    else if (!SelectedOptions.IsReferencesActive)
+                    {
+                        _dialogService.ShowMessage(
+                            "В документе нет записей для форматирования.",
+                            "Форматирование",
+                            MessageBoxButton.OK);
+                        return;
+                    }
                     progressService.CompleteStep(stepIndex);
                     ++stepIndex;
                 }
@@ -183,7 +200,7 @@ namespace EditorApp.source
 
                     if (newDocumentPath == "original")
                     {
-                        newDocumentPath = await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, FormattedBibliography, "links");
+                        newDocumentPath = await _documentService.SaveAsProcessedAsync(SelectedDocument.FilePath, Array.Empty<BibliographyItemResult>(), "links");
                     }
 
                     linkResult = await _formatService.CheckLinksAsync(newDocumentPath, linkProgress, _cancellationTokenSource.Token);

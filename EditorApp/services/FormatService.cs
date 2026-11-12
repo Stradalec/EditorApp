@@ -28,39 +28,82 @@ namespace EditorApp.services
             _linkHttpClient = linkHttpClient;
         }
 
-        public async Task<string> FormatBibliographyAsync(string rawText, TemplateItem selectedTemplatedId, IProgress<(int current, int total)> progress, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<BibliographyItemResult>> FormatBibliographyAsync(
+            string rawText,
+            TemplateItem selectedTemplate,
+            IProgress<(int current, int total)> progress,
+            CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(rawText))
-            {
-                return "Исходный текст пуст.";
-            }
+                return Array.Empty<BibliographyItemResult>();
 
             var items = SplitIntoBibliographyItems(rawText);
-            if (!items.Any())
-            {
-                return rawText;
-            }
-            var formattedItems = new List<string>();
-            int total = items.Count;
-            for (int formatIndex = 0; formatIndex < items.Count; ++formatIndex)
+            var results = new List<BibliographyItemResult>(items.Count);
+
+            foreach (string item in items)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                try
-                {
-                    var formatted = await FormatSingleItemAsync(items[formatIndex], selectedTemplatedId, cancellationToken);
-                    if (formatted.EndsWith("[Элемент: sectPr]", StringComparison.OrdinalIgnoreCase))
-                    {
-                        formatted = formatted.Substring(0, formatted.Length - "[Элемент: sectPr]".Length);
-                    }
-                    formattedItems.Add(formatted.Trim());
-                    progress?.Report((formatIndex + 1, total));
-                }
-                catch
-                {
-                    formattedItems.Add(items[formatIndex].Trim());
-                }
+
+                results.Add(await FormatSingleItemAsync(
+                    item, selectedTemplate, cancellationToken));
+
+                progress?.Report((results.Count, items.Count));
             }
-            return string.Join("\n", formattedItems);
+
+            return results;
+        }
+
+        private async Task<BibliographyItemResult> FormatSingleItemAsync(
+            string item,
+            TemplateItem selectedTemplate,
+            CancellationToken cancellationToken)
+        {
+            var fallback = new BibliographyItemResult(item, item, HighlightAmber: true);
+
+            try
+            {
+                var request = new ListRequest {
+                    text = item,
+                    language = DetectLanguage(item),
+                    templateId = selectedTemplate?.Id ?? "default"
+                };
+
+                using var response = await _httpClient.PostAsJsonAsync(
+                    "format", request, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                    return fallback;
+
+                var data = await response.Content.ReadFromJsonAsync<ListResponse>(
+                    cancellationToken: cancellationToken);
+
+                if (data == null || string.IsNullOrWhiteSpace(data.result))
+                    return fallback;
+
+                const string sectionMarker = "[Элемент: sectPr]";
+                string output = data.result.Trim();
+
+                if (output.EndsWith(sectionMarker, StringComparison.OrdinalIgnoreCase))
+                    output = output.Substring(0, output.Length - sectionMarker.Length);
+
+                output = RemoveExtraSpaces(output);
+
+                return string.IsNullOrWhiteSpace(output)
+                    ? fallback
+                    : new BibliographyItemResult(item, output, data.missing_data);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                return fallback;
+            }
+            catch (HttpRequestException)
+            {
+                return fallback;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return fallback;
+            }
         }
         private List<string> SplitIntoBibliographyItems(string text)
         {
@@ -75,7 +118,7 @@ namespace EditorApp.services
             {
                 var trimmed = line.Trim();
 
-                if (string.IsNullOrWhiteSpace(trimmed))
+                if (!HasVisibleText(trimmed))
                     continue;
 
                 if (trimmed.StartsWith("[Элемент:", StringComparison.OrdinalIgnoreCase))
@@ -90,56 +133,15 @@ namespace EditorApp.services
             return items;
         }
 
-        private async Task<string> FormatSingleItemAsync(string item, TemplateItem selectedTemplate,  CancellationToken cancellationToken)
+        private static bool HasVisibleText(string text)
         {
-            if (Regex.IsMatch(item.Trim(), @"^\d{1,3}[\.\)\-\–\—]\s*$"))
-            {
-                return item;
-            }
-
-            string reason = "";
-            try
-            {
-                var request = new ListRequest {
-                    text = item,
-                    language = DetectLanguage(item),
-                    templateId = selectedTemplate?.Id ?? "default"
-                };
-                var response = await _httpClient.PostAsJsonAsync("format", request, cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    var result = await response.Content.ReadFromJsonAsync<ListResponse>();
-                    var formatted = result?.result?.Trim();
-
-                    if (!string.IsNullOrWhiteSpace(formatted))
-                    {
-                        formatted = RemoveExtraSpaces(formatted);
-                        return formatted;
-                    }
-                }
-
-                var error = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Ошибка при обработке пункта: {response.StatusCode}\n{error}");
-            }
-            catch (HttpRequestException ex)
-            {
-                reason = $" Сетевая ошибка: {ex.Message}";
-            }
-            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
-            {
-                reason = "Таймаут подключения к серверу";
-            }
-            catch (OperationCanceledException ex)
-            {
-                reason = $" Операция отменена пользователем: {ex.Message}";
-                throw;
-            }
-            catch (Exception ex)
-            {
-                reason = $"Неизвестная ошибка: {ex.Message}";
-            }
-            return $"Не удалось отформатировать{reason}";
+            return text.Any(ch =>
+                !char.IsWhiteSpace(ch) &&
+                !char.IsControl(ch) &&
+                char.GetUnicodeCategory(ch) !=
+                    System.Globalization.UnicodeCategory.Format);
         }
+        
         private string RemoveExtraSpaces(string text)
         {
             if (string.IsNullOrWhiteSpace(text))

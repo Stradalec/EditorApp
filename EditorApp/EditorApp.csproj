@@ -52,10 +52,16 @@
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="Extensions.Configuration" Version="0.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+    <PackageReference Include="XamlAnimatedGif" Version="2.3.2" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="icons\icon_help.png" />
     <Resource Include="icons\icon_view.png" />
     <Resource Include="icons\icon_view.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="source\MainWindow.ProgressGif.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
   </Project>

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EditorApp"
         mc:Ignorable="d"
+        xmlns:gif="https://github.com/XamlAnimatedGif/XamlAnimatedGif"
         AllowDrop="True"
         Drop="HandleDrop"
         DragEnter="HandleDragEnter"
@@ -111,17 +112,29 @@
         <Button DockPanel.Dock="Left" Template="{DynamicResource ButtonTextBorderBold}"  Command="{Binding ProcessAndSaveDocumentCommand}" ToolTip="Начать выбранные операции с документом">Запустить</Button>
         <Button DockPanel.Dock="Right" Template="{DynamicResource TextButton1}" Command="{Binding CancelAnyProcessCommand}" ToolTip="Прервать процесс обработки документа без сохранения">Прервать операцию</Button>
       </DockPanel>
+      <DockPanel>
+        <Image x:Name="ProgressGifImage"
+         DockPanel.Dock="Right"
+         Width="88"
+         Height="88"
+         Margin="8,0,0,0"
+         Stretch="Uniform"
+         VerticalAlignment="Center"
+         Visibility="Collapsed"
+         gif:AnimationBehavior.RepeatBehavior="Forever"/>
 
-      <StackPanel Margin="10">
-        <ProgressBar 
-        Value="{Binding ProgressValue}" 
-        Maximum="{Binding ProgressMaximum}"
-        Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
-        Height="25" 
-        Margin="0,5,0,5"
-        IsIndeterminate="False"/>
+        <StackPanel Margin="10">
+          <ProgressBar x:Name="ProcessingProgressBar"
+                 Value="{Binding ProgressValue}"
+                 Maximum="{Binding ProgressMaximum}"
+                 Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                 Height="25"
+                 Margin="0,5,0,5"
+                 IsIndeterminate="False"
+                 ValueChanged="ProgressGifValueChanged"
+                 IsVisibleChanged="ProgressGifVisibilityChanged"/>
 
-        <TextBlock 
+          <TextBlock 
         Text="{Binding ProgressText}" 
         Style="{DynamicResource BlackTextBlock}"
         Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -137,7 +150,23 @@
           FontSize="18"
           Margin="0,0,0,6"/>
       </StackPanel>
+      </DockPanel>
     </StackPanel>
+    <Button Grid.Row="1"
+        Content="Персонализация"
+        Style="{StaticResource FormButton}"
+        HorizontalAlignment="Left"
+        Margin="0,8,0,0"
+        Click="OpenProgressGifMenu">
+      <Button.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Выбрать GIF для 0–25 %" Tag="1" Click="ChooseProgressGif"/>
+          <MenuItem Header="Выбрать GIF для 26–50 %" Tag="2" Click="ChooseProgressGif"/>
+          <MenuItem Header="Выбрать GIF для 51–75 %" Tag="3" Click="ChooseProgressGif"/>
+          <MenuItem Header="Выбрать GIF для 76–100 %" Tag="4" Click="ChooseProgressGif"/>
+        </ContextMenu>
+      </Button.ContextMenu>
+    </Button>
     <Button Grid.Row="1"
         Content="Исправить ошибку форматирования..."
         Command="{Binding OpenFeedbackCommand}"

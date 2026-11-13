@@ -35,7 +35,21 @@
           <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource FormTextBox}"/>
         </StackPanel.Resources>
         <Label Content="Тип источника" Target="{Binding ElementName=SourceTypeBox}"/>
-        <TextBox x:Name="SourceTypeBox"/>
+        <ComboBox x:Name="SourceTypeBox"
+          SelectedValuePath="Tag"
+          MinHeight="36"
+          FontSize="16"
+          Padding="9,6">
+          <ComboBoxItem Content="Книга" Tag="book"/>
+          <ComboBoxItem Content="Статья в журнале" Tag="journal"/>
+          <ComboBoxItem Content="Статья в сборнике" Tag="proceedings"/>
+          <ComboBoxItem Content="Патент" Tag="patent"/>
+          <ComboBoxItem Content="Стандарт" Tag="standard"/>
+          <ComboBoxItem Content="Закон / нормативный акт" Tag="law"/>
+          <ComboBoxItem Content="Диссертация" Tag="dissertation"/>
+          <ComboBoxItem Content="Сайт целиком" Tag="website"/>
+          <ComboBoxItem Content="Страница сайта" Tag="webpage"/>
+        </ComboBox>
 
         <Label Content="Исходная запись"
                        Target="{Binding ElementName=OriginalTextBox}"

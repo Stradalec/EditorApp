@@ -22,7 +22,7 @@ namespace EditorApp
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            string sourceType = SourceTypeBox.Text.Trim();
+            string sourceType = SourceTypeBox.SelectedValue as string ?? string.Empty;
             string originalText = OriginalTextBox.Text;
             string modelOutput = ModelOutputBox.Text;
             string expectedOutput = ExpectedOutputBox.Text;
